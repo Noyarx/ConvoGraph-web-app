@@ -1,10 +1,10 @@
 
 export interface TextModifier{
-    type: string;
-    value: string;
+    type: string,
+    value: string
 }
 
 export interface TextAnimation{
-    type: string
+    type: string,
     values: string[]
 }
