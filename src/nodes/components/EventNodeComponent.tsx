@@ -1,7 +1,7 @@
 import { Handle, Position, type Node } from "@xyflow/react";
 import type { EventNode } from "../../models/NodeTypes.model";
 
-export default function ConditionalNodeComponent(flowNode: Pick<Node, "data">) {
+function EventNodeComponent(flowNode: Pick<Node, "data">) {
   const node = flowNode.data as any as EventNode;
   return (
     <div
@@ -23,3 +23,5 @@ export default function ConditionalNodeComponent(flowNode: Pick<Node, "data">) {
     </div>
   );
 }
+
+export default EventNodeComponent;

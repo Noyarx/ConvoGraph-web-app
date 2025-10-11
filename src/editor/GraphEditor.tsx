@@ -1,9 +1,9 @@
-// src/components/GraphEditor.tsx
 import {
   addEdge,
   Background,
   Controls,
   ReactFlow,
+  StepEdge,
   useEdgesState,
   useNodesState,
   type Connection,
@@ -11,21 +11,27 @@ import {
 } from "@xyflow/react";
 import { useCallback, useEffect } from "react";
 
+import type { GraphNode } from "../models/NodeTypes.model";
 import {
   flowToGraphNode,
   toXYFlowEdges,
   toXYFlowNodes,
-} from "../utils/xyflowAdapter";
-import ConditionalNodeComponent from "./nodes/ConditionalNodeComponent";
-import DialogueNodeComponent from "./nodes/DialogueNodeComponent";
-import EventNodeComponent from "./nodes/EventNodeComponent";
+} from "../nodes/utils/xyflowAdapter";
+import ConditionalNodeComponent from "../nodes/components/ConditionalNodeComponent";
+import EventNodeComponent from "../nodes/components/EventNodeComponent";
+import QuestionNodeComponent from "../nodes/components/QuestionNodeComponent";
+import DialogueNodeComponent from "../nodes/components/StatementNodeComponent";
 
-import type { GraphNode } from "../models/NodeTypes.model";
-
+// custom node types to pass as props to ReactFlow
 const nodeTypes = {
   statement: DialogueNodeComponent,
   condition: ConditionalNodeComponent,
+  question: QuestionNodeComponent,
   event: EventNodeComponent,
+};
+
+const edgeTypes = {
+  step: StepEdge,
 };
 
 interface GraphEditorProps {
@@ -39,9 +45,14 @@ export default function GraphEditor({ nodes }: GraphEditorProps) {
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
+  // quando vengono aggiornati i props GraphNodes, aggiungili convertiti alla lista di flowNodes
   useEffect(() => {
-    const res = flowToGraphNode(flowNodes, edges);
-    console.log("stiamo stampando res:", res);
+    setFlowNodes(() => toXYFlowNodes(nodes));
+  }, [nodes]);
+
+  // on each change of one of the nodes or edges, update the GraphNode list
+  useEffect(() => {
+    flowToGraphNode(flowNodes, edges);
   }, [flowNodes, edges]);
 
   const onConnect = useCallback((params: Edge | Connection) => {

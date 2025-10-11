@@ -1,13 +1,13 @@
 import { Handle, Position, type Node } from "@xyflow/react";
-import type { StatementNode } from "../../models/NodeTypes.model";
+import type { QuestionNode } from "../../models/NodeTypes.model";
 
-export default function DialogueNodeComponent(flowNode: Pick<Node, "data">) {
-  const node = flowNode.data as any as StatementNode;
+function QuestionNodeComponent(flowNode: Pick<Node, "data">) {
+  const node = flowNode.data as any as QuestionNode;
 
   return (
     <div
       style={{
-        backgroundColor: node.node_info.color || "#4e73df",
+        backgroundColor: node.node_info.color || "#33cfbaff",
         borderRadius: "8px",
         padding: "10px",
         color: "white",
@@ -24,3 +24,5 @@ export default function DialogueNodeComponent(flowNode: Pick<Node, "data">) {
     </div>
   );
 }
+
+export default QuestionNodeComponent;

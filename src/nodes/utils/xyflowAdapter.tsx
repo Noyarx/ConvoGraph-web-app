@@ -1,6 +1,8 @@
-import type { Edge, Node } from "@xyflow/react";
-import type { DialogueChoice } from "../models/DialogueChoice.model";
-import type { GraphNode } from "../models/NodeTypes.model";
+import { StepEdge, type Edge, type Node } from "@xyflow/react";
+import type { DialogueChoice } from "../../models/DialogueChoice.model";
+import type { GraphNode } from "../../models/NodeTypes.model";
+
+//#region GraphNode-ReactFlow
 
 // Returns a ReactFlow node mapped from a GraphNode and puts the whole GraphNode in the data property
 export function toXYFlowNode(node: GraphNode): Node {
@@ -12,6 +14,7 @@ export function toXYFlowNode(node: GraphNode): Node {
   };
 }
 
+// Returns a list of ReactFlow nodes mapped from a list of GraphNodes
 export function toXYFlowNodes(nodes: GraphNode[]): Node[] {
   return nodes.map(toXYFlowNode);
 }
@@ -31,6 +34,7 @@ export function toXYFlowEdge(node: GraphNode): Edge[] {
     case "question":
       return node.choices.map((e) => ({
         id: node.id + "-" + e.next_node,
+        type: { step: StepEdge } as any,
         source: node.id,
         target: e.next_node,
         label: e.text,
@@ -56,11 +60,15 @@ export function toXYFlowEdge(node: GraphNode): Edge[] {
   }
 }
 
-// Maps all GraphNodes into ReactFlow nodes
+// Returns a list of ReactFlow edges mapped from a list of GraphNodes
 export function toXYFlowEdges(nodes: GraphNode[]): Edge[] {
   //use flatMap to return in a single array all the items from a matrix
   return nodes.flatMap(toXYFlowEdge);
 }
+
+//#endregion
+
+//#region ReactFlow-GraphNode
 
 // Function to remap ReactFlow nodes and edges into GraphNodes
 export function flowToGraphNode(nodes: Node[], edges: Edge[]): GraphNode[] {
@@ -83,14 +91,16 @@ export function flowToGraphNode(nodes: Node[], edges: Edge[]): GraphNode[] {
     return e;
   });
 
-  // create a key:value map where key is the node's id and value is the whole GraphNode
+  // Create a key:value map where key is the node's id and value is the whole GraphNode
   const graphMap: Record<string, GraphNode> = graphNodes.reduce(
     (acc, curr) => ({ ...acc, [curr.id]: curr }),
     {}
   );
 
-  // for each edge set find the corresponding source node in the graphNode,
-  // then set that node's 'next_node' value to the edge's target value.
+  /*
+    For each edge set find the corresponding source node in the graphNode,
+    then set that node's 'next_node' value to the edge's target value.
+  */
   edges.forEach((el) => {
     const sourceNode = graphMap[el.source];
 
