@@ -3,36 +3,36 @@ import {
   Background,
   Controls,
   ReactFlow,
-  StepEdge,
   useEdgesState,
   useNodesState,
   type Connection,
   type Edge,
+  type Node
 } from "@xyflow/react";
 import { useCallback, useEffect } from "react";
 
 import type { GraphNode } from "../models/NodeTypes.model";
+import ConditionalNodeComponent from "../nodes/components/ConditionalNodeComponent";
+import EventNodeComponent from "../nodes/components/EventNodeComponent";
+import QuestionNodeComponent from "../nodes/components/QuestionNodeComponent";
+import DialogueNodeComponent from "../nodes/components/StatementNodeComponent";
 import {
   flowToGraphNode,
   toXYFlowEdges,
   toXYFlowNodes,
 } from "../nodes/utils/xyflowAdapter";
-import ConditionalNodeComponent from "../nodes/components/ConditionalNodeComponent";
-import EventNodeComponent from "../nodes/components/EventNodeComponent";
-import QuestionNodeComponent from "../nodes/components/QuestionNodeComponent";
-import DialogueNodeComponent from "../nodes/components/StatementNodeComponent";
 
 // custom node types to pass as props to ReactFlow
-const nodeTypes = {
+const nodeTypes: Record<GraphNode["type"], React.FC<Pick<Node, "data">>> = {
   statement: DialogueNodeComponent,
   condition: ConditionalNodeComponent,
   question: QuestionNodeComponent,
   event: EventNodeComponent,
 };
 
-const edgeTypes = {
-  step: StepEdge,
-};
+// const _edgeTypes = {
+//   step: StepEdge,
+// };
 
 interface GraphEditorProps {
   nodes: GraphNode[];
