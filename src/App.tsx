@@ -124,7 +124,7 @@ const initialEdges = [{ id: "1-2", source: "1", target: "2" }];
 
 export default function App() {
   const [nodes, setNodes] = useState<GraphNode[]>(initialGraph);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  const [_edges, _setEdges] = useState<Edge[]>(initialEdges);
   const [incr, setIncr] = useState(0);
   const [newNode, setNewNode] = useState<GraphNode>(nodo);
 
