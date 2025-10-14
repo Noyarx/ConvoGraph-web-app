@@ -1,25 +1,31 @@
 import { Handle, Position, type Node } from "@xyflow/react";
 import type { StatementNode } from "../../models/NodeTypes.model";
 
+export const bgColor = "#4e73df";
+
 function StatementNodeComponent(flowNode: Pick<Node, "data">) {
   const node = flowNode.data as any as StatementNode;
 
   return (
     <div
       style={{
-        backgroundColor: node.node_info.color || "#4e73df",
-        borderRadius: "8px",
-        padding: "10px",
+        background: bgColor,
         color: "white",
-        minWidth: "150px",
+        borderRadius: 8,
+        padding: 20,
+        minWidth: 180,
       }}
     >
-      <div style={{ display: "flex", fontWeight: "bold" }}>
-        {node.node_info.title}
-        <span>{node.id}</span>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <span>
+          <strong>{node.node_info.title}</strong>
+        </span>
+        <span>{bgColor}</span>
       </div>
-      <div style={{ fontSize: "0.9em" }}>
-        <strong>{node.data.speaker}</strong>: {node.data.text}
+      <div>
+        <span>
+          <strong>{node.data.speaker}</strong>: {node.data.text}
+        </span>
       </div>
 
       <Handle type="target" position={Position.Top} />

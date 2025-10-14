@@ -6,6 +6,5 @@ export interface NodePosition {
 export interface NodeInfo {
   position: NodePosition;
   title: string;
-  shape: string;
   color: string;
 }

@@ -26,7 +26,7 @@ export function toXYFlowEdge(node: GraphNode): Edge[] {
     case "event":
       return [
         {
-          id: node.id + "-" + node.next_node,
+          id: node.type + "-" + node.id + "-" + node.next_node,
           source: node.id,
           target: node.next_node,
         },
@@ -43,14 +43,14 @@ export function toXYFlowEdge(node: GraphNode): Edge[] {
     case "condition":
       return [
         {
-          id: node.id + "-" + node.next_node_true,
+          id: node.type + "-" + node.id + "-" + node.next_node_true,
           source: node.id,
           sourceHandle: "left",
           target: node.next_node_true,
           data: { source: "next_node_true" },
         },
         {
-          id: node.id + "-" + node.next_node_false,
+          id: node.type + "-" + node.id + "-" + node.next_node_false,
           source: node.id,
           sourceHandle: "right",
           target: node.next_node_false,
@@ -70,8 +70,19 @@ export function toXYFlowEdges(nodes: GraphNode[]): Edge[] {
 
 //#region ReactFlow-GraphNode
 
+export function flowToGraphNode(node: Node): GraphNode {
+  let graphNode: GraphNode = node.data as any as GraphNode;
+  graphNode.id = node.id;
+  graphNode.node_info.position = node.position;
+  return graphNode;
+}
+
+export function flowToGraphNodes(nodes: Node[]): GraphNode[] {
+  return nodes.map(flowToGraphNode);
+}
+
 // Function to remap ReactFlow nodes and edges into GraphNodes
-export function flowToGraphNode(nodes: Node[], edges: Edge[]): GraphNode[] {
+export function flowToGraphEdges(nodes: Node[], edges: Edge[]): GraphNode[] {
   let graphNodes: GraphNode[] = nodes.map((e) => e.data as any as GraphNode);
 
   // Reset next_node value for every type of GraphNode
@@ -79,16 +90,14 @@ export function flowToGraphNode(nodes: Node[], edges: Edge[]): GraphNode[] {
     switch (e.type) {
       case "event":
       case "statement":
-        e.next_node = "";
-        break;
+        return { ...e, next_node: "" };
       case "question":
-        e.choices = [];
-        break;
+        return { ...e, choices: [] };
       case "condition":
-        e.next_node_false = e.next_node_true = "";
-        break;
+        return { ...e, next_node_true: "", next_node_false: "" };
+      default:
+        return e;
     }
-    return e;
   });
 
   // Create a key:value map where key is the node's id and value is the whole GraphNode
@@ -98,8 +107,8 @@ export function flowToGraphNode(nodes: Node[], edges: Edge[]): GraphNode[] {
   );
 
   /*
-    For each edge set find the corresponding source node in the graphNode,
-    then set that node's 'next_node' value to the edge's target value.
+    For each edge set find the corresponding source node in the graphMap,
+    then set that node's 'next_node' value(s) to the edge's target value.
   */
   edges.forEach((el) => {
     const sourceNode = graphMap[el.source];
@@ -120,7 +129,10 @@ export function flowToGraphNode(nodes: Node[], edges: Edge[]): GraphNode[] {
         const choice = el.data as any as DialogueChoice;
         choice.next_node = el.target;
         sourceNode.choices.push(choice);
+        break;
     }
   });
   return graphNodes;
 }
+
+//#endregion
