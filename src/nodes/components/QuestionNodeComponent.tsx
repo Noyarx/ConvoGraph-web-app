@@ -11,7 +11,7 @@ function QuestionNodeComponent(flowNode: Pick<Node, "data">) {
       style={{
         backgroundColor: node.node_info.color || bgColor,
         borderRadius: "8px",
-        padding: "10px",
+        padding: 15,
         color: "white",
         minWidth: "150px",
       }}

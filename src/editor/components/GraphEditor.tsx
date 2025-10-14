@@ -8,8 +8,11 @@ import {
   useNodesState,
   type Connection,
   type Edge,
+  type EdgeMouseHandler,
+  type Node,
+  type NodeMouseHandler,
 } from "@xyflow/react";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 import { v4 as uuidv4 } from "uuid";
 import type { GraphNode } from "../../models/NodeTypes.model";
@@ -28,6 +31,9 @@ import DialogueNodeComponent, {
 import { toXYFlowEdges, toXYFlowNodes } from "../../nodes/utils/xyflowAdapter";
 import AddNodeButton from "./AddNodeButton";
 import StatementNodeComponent from "../../nodes/components/StatementNodeComponent";
+import EditModal from "../editModal/components/EditModal";
+import EdgeEditor from "../editModal/components/EdgeEditor";
+import NodeEditor from "../editModal/components/NodeEditor";
 
 const initialGraphNodes: GraphNode[] = [
   {
@@ -211,8 +217,13 @@ export default function GraphEditor() {
   const initialNodes = toXYFlowNodes(initialGraphNodes);
   const initialEdges = toXYFlowEdges(initialGraphNodes);
 
-  const [flowNodes, setFlowNodes] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [flowNodes, setFlowNodes] = useNodesState<Node>(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
+
+  const [EditModalOpen, setEditModalOpen] = useState<boolean>(false);
+  const [titleElement, setTitleElement] = useState<string>("");
+  const [editingEdge, setEditingEdge] = useState<Edge | null>(null);
+  const [editingNode, setEditingNode] = useState<Node | null>(null);
 
   // handler to create and add a new node
   const handleAddNode = useCallback(
@@ -243,6 +254,12 @@ export default function GraphEditor() {
   const onConnect = useCallback(
     (params: Edge | Connection) => {
       setEdges((eds) => addEdge(params, eds));
+      if (flowNodes.find((n) => n.id === params.source)?.type === "question") {
+        setTitleElement("an edge");
+        setEditingEdge({ ...params } as Edge); // in realtà è di tipo Connection e non contiene un id
+        setEditingNode(null); // probabilmente da togliere
+        setEditModalOpen(true);
+      }
     },
     [setEdges]
   );
@@ -258,23 +275,71 @@ export default function GraphEditor() {
     [setFlowNodes, setEdges]
   );
 
+  const onNodeContextMenu: NodeMouseHandler<Node> = useCallback(
+    (e: React.MouseEvent<Element, MouseEvent>, node: Node) => {
+      e.preventDefault();
+      setTitleElement("a node");
+      const fakeNode: Node = {
+        ...node,
+      };
+      setEditingEdge(null);
+      setEditingNode(fakeNode);
+      setEditModalOpen((value) => !value);
+    },
+    [setEditModalOpen]
+  );
+
+  const onEdgeContextMenu: EdgeMouseHandler<Edge> = useCallback(
+    (e: React.MouseEvent<Element, MouseEvent>, edge: Edge) => {
+      e.preventDefault();
+      setTitleElement("an edge");
+      const fakeEdge: Edge = {
+        ...edge,
+      };
+      setEditingNode(null);
+      setEditingEdge(fakeEdge);
+      setEditModalOpen((value) => !value);
+    },
+    [setEditModalOpen, setEditingEdge]
+  );
+
+  const handleEditClose = useCallback(() => {}, []);
+
+  const handleSaveEdge = (updatedEdge: Edge) => {
+    setEdges((eds) =>
+      eds.map((e) => (e.id === updatedEdge.id ? updatedEdge : e))
+    );
+    setEditModalOpen(false);
+  };
+
   return (
     <div style={{ width: "100%", height: "100vh" }}>
-      <AddNodeButton onClick={() => handleAddNode("statement")} />
-
       <ReactFlow
         nodes={flowNodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onEdgeContextMenu={onEdgeContextMenu}
+        onNodeContextMenu={onNodeContextMenu}
         nodeTypes={nodeTypes}
         fitView
         minZoom={0.2}
       >
+        <AddNodeButton onClick={() => handleAddNode("statement")} />
         <Background />
         <Controls />
       </ReactFlow>
+      <EditModal
+        open={EditModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        title={`Editing ${titleElement}`}
+      >
+        {editingEdge && (
+          <EdgeEditor edge={editingEdge} onSave={handleSaveEdge} />
+        )}
+        {editingNode && <NodeEditor node={editingNode as any}></NodeEditor>}
+      </EditModal>
     </div>
   );
 }

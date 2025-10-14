@@ -12,7 +12,7 @@ function StatementNodeComponent(flowNode: Pick<Node, "data">) {
         background: bgColor,
         color: "white",
         borderRadius: 8,
-        padding: 20,
+        padding: 15,
         minWidth: 180,
       }}
     >
