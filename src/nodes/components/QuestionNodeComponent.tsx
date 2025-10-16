@@ -1,7 +1,7 @@
 import { Handle, Position, type Node } from "@xyflow/react";
 import type { QuestionNode } from "../../models/NodeTypes.model";
 
-export const bgColor = "#33cfbaff";
+export const bgColor = "#2db4a2ff";
 
 function QuestionNodeComponent(flowNode: Pick<Node, "data">) {
   const node = flowNode.data as any as QuestionNode;

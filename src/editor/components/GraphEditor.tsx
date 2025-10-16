@@ -4,12 +4,17 @@ import {
   Background,
   Controls,
   ReactFlow,
+  ReactFlowProvider,
+  SelectionMode,
   useEdgesState,
   useNodesState,
   type Connection,
   type Edge,
+  type EdgeMouseHandler,
+  type Node,
+  type NodeMouseHandler,
 } from "@xyflow/react";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 import { v4 as uuidv4 } from "uuid";
 import type { GraphNode } from "../../models/NodeTypes.model";
@@ -22,12 +27,12 @@ import EventNodeComponent, {
 import QuestionNodeComponent, {
   bgColor as questionBgColor,
 } from "../../nodes/components/QuestionNodeComponent";
-import DialogueNodeComponent, {
+import StatementNodeComponent, {
   bgColor as statementBgColor,
 } from "../../nodes/components/StatementNodeComponent";
 import { toXYFlowEdges, toXYFlowNodes } from "../../nodes/utils/xyflowAdapter";
+import SidebarEditor from "../editModal/components/SidebarEditor";
 import AddNodeButton from "./AddNodeButton";
-import StatementNodeComponent from "../../nodes/components/StatementNodeComponent";
 
 const initialGraphNodes: GraphNode[] = [
   {
@@ -212,8 +217,13 @@ export default function GraphEditor() {
   const initialEdges = toXYFlowEdges(initialGraphNodes);
 
   const [flowNodes, setFlowNodes] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
 
+  const [editingElement, setEditingElement] = useState<Node | Edge | null>(
+    null
+  );
+
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   // handler to create and add a new node
   const handleAddNode = useCallback(
     (
@@ -242,7 +252,14 @@ export default function GraphEditor() {
 
   const onConnect = useCallback(
     (params: Edge | Connection) => {
-      setEdges((eds) => addEdge(params, eds));
+      const editedEdge = { ...params } as Edge;
+      const isNewEdge = !editedEdge.id;
+      if (isNewEdge) editedEdge.id = `${uuidv4()}`;
+      setEdges((eds) => addEdge(editedEdge, eds));
+
+      // open the edit modal only if the source node is a question
+      setEditingElement(editedEdge);
+      setSidebarOpen(true);
     },
     [setEdges]
   );
@@ -258,23 +275,115 @@ export default function GraphEditor() {
     [setFlowNodes, setEdges]
   );
 
+  const handleSaveNode = (updatedNode: Record<string, any>) => {
+    const node = updatedNode as Node;
+    setFlowNodes((nds) => nds.map((n) => (n.id === node.id ? node : n)));
+  };
+
+  // Update edges list
+  const handleSaveEdge = (updatedEdge: Edge) => {
+    setEdges((eds) =>
+      eds.map((e) => (e.id === updatedEdge.id ? updatedEdge : e))
+    );
+  };
+
+  const handleNodeClick: NodeMouseHandler<any> = useCallback(
+    (e: React.MouseEvent<Element, MouseEvent>, node: Node) => {
+      switch (node.type) {
+        case "statement":
+          setEditingElement(node);
+          break;
+        case "question":
+          setEditingElement(node);
+          break;
+        case "condition":
+          setEditingElement(node);
+          break;
+        case "event":
+          setEditingElement(node);
+          break;
+      }
+      setSidebarOpen(true);
+    },
+    []
+  );
+
+  const handleEdgeClick: EdgeMouseHandler<Edge> = useCallback(
+    (e: React.MouseEvent<Element, MouseEvent>, edge: Edge) => {
+      setEditingElement(edge);
+      setSidebarOpen(true);
+    },
+    []
+  );
+  const onSidebarClose = () => {
+    setEditingElement(null);
+    setSidebarOpen(false);
+  };
+
   return (
     <div style={{ width: "100%", height: "100vh" }}>
-      <AddNodeButton onClick={() => handleAddNode("statement")} />
-
-      <ReactFlow
-        nodes={flowNodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        nodeTypes={nodeTypes}
-        fitView
-        minZoom={0.2}
-      >
-        <Background />
-        <Controls />
-      </ReactFlow>
+      {/* <AddNodeButton onClick={() => handleAddNode("statement")} /> */}
+      <ReactFlowProvider>
+        <ReactFlow
+          selectionMode={SelectionMode.Partial}
+          connectionRadius={30}
+          nodes={flowNodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onNodeClick={handleNodeClick}
+          onEdgeClick={handleEdgeClick}
+          nodeTypes={nodeTypes}
+          fitView
+          minZoom={0.2}
+        >
+          <Background />
+          <Controls
+            showZoom={false}
+            showFitView={false}
+            showInteractive={false}
+            position="bottom-center"
+            orientation="horizontal"
+            className="rounded-md shadow-none border border-gray-50 p-1 bg-surface-light bg-opacity-60"
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              columnGap: 8,
+              justifyContent: "space-between",
+              marginTop: 20,
+            }}
+          >
+            <AddNodeButton
+              type="statement"
+              color={statementBgColor}
+              onAddNode={handleAddNode}
+            />
+            <AddNodeButton
+              type="question"
+              color={questionBgColor}
+              onAddNode={handleAddNode}
+            />
+            <AddNodeButton
+              type="condition"
+              color={conditionBgColor}
+              onAddNode={handleAddNode}
+            />
+            <AddNodeButton
+              type="event"
+              color={eventBgColor}
+              onAddNode={handleAddNode}
+            />
+          </Controls>
+        </ReactFlow>
+        <SidebarEditor
+          selectedElement={editingElement}
+          open={sidebarOpen}
+          onClose={onSidebarClose}
+          onSaveNode={handleSaveNode}
+          onSaveEdge={handleSaveEdge}
+        ></SidebarEditor>
+      </ReactFlowProvider>
     </div>
   );
 }
