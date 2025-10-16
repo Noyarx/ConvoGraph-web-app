@@ -33,7 +33,6 @@ import StatementNodeComponent, {
 import { toXYFlowEdges, toXYFlowNodes } from "../../nodes/utils/xyflowAdapter";
 import SidebarEditor from "../editModal/components/SidebarEditor";
 import AddNodeButton from "./AddNodeButton";
-
 const initialGraphNodes: GraphNode[] = [
   {
     id: uuidv4(),
@@ -287,7 +286,7 @@ export default function GraphEditor() {
     );
   };
 
-  const handleNodeClick: NodeMouseHandler<any> = useCallback(
+  const handleNodeClick: NodeMouseHandler<Node> = useCallback(
     (e: React.MouseEvent<Element, MouseEvent>, node: Node) => {
       switch (node.type) {
         case "statement":
