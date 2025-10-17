@@ -7,27 +7,41 @@ function ConditionalNodeComponent(flowNode: Pick<Node, "data">) {
   const node = flowNode.data as any as ConditionalNode;
   return (
     <div
+      className="flex flex-col gap-1 rounded-lg p-4 break-words max-w-[330px] min-w-[200px] text-white"
       style={{
         backgroundColor: node.node_info.color || bgColor,
-        borderRadius: "8px",
-        padding: "10px",
-        color: "white",
-        minWidth: "150px",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
+      <div className="flex flex-row gap-4 justify-between">
         <span>
-          <strong>{node.node_info.title}</strong>
+          <strong>Check</strong>:
         </span>
-        <span>{bgColor}</span>
+        <span>{node.data.condition}</span>
       </div>
-      <span>
-        <strong>Variable</strong>: {node.data.condition}
-      </span>
 
-      <Handle type="target" position={Position.Top} />
-      <Handle id="left" type="source" position={Position.Left} />
-      <Handle id="right" type="source" position={Position.Right} />
+      <Handle
+        style={{ width: 16, height: 16, backgroundColor: "green" }}
+        type="target"
+        position={Position.Top}
+      />
+      <Handle
+        style={{
+          width: 16,
+          height: 16,
+          backgroundColor: "darkorange",
+        }}
+        type="source"
+        position={Position.Left}
+      />
+      <Handle
+        style={{
+          width: 16,
+          height: 16,
+          backgroundColor: "darkorange",
+        }}
+        type="source"
+        position={Position.Right}
+      />
     </div>
   );
   return <></>;

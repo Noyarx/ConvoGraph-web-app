@@ -8,28 +8,35 @@ function QuestionNodeComponent(flowNode: Pick<Node, "data">) {
 
   return (
     <div
+      className="flex flex-col gap-1 rounded-lg p-4 break-words max-w-[330px] min-w-[200px] text-white"
       style={{
         backgroundColor: node.node_info.color || bgColor,
-        borderRadius: "8px",
-        padding: "10px",
-        color: "white",
-        minWidth: "150px",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
+      <div className="flex flex-row justify-between">
         <span>
-          <strong>{node.node_info.title}</strong>
+          <strong>{node.data.speaker}</strong>:
         </span>
-        <span>{bgColor}</span>
-      </div>
-      <div>
         <span>
-          <strong>{node.data.speaker}</strong>: {node.data.text}
+          <strong>{node.data.mood}</strong>
         </span>
       </div>
+      <p>{node.data.text}</p>
 
-      <Handle type="target" position={Position.Top} />
-      <Handle type="source" position={Position.Bottom} />
+      <Handle
+        style={{ width: 16, height: 16, backgroundColor: "green" }}
+        type="target"
+        position={Position.Top}
+      />
+      <Handle
+        style={{
+          width: 16,
+          height: 16,
+          backgroundColor: "darkorange",
+        }}
+        type="source"
+        position={Position.Bottom}
+      />
     </div>
   );
 }

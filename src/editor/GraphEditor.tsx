@@ -1,6 +1,5 @@
 import {
   addEdge,
-  applyNodeChanges,
   Background,
   Controls,
   ReactFlow,
@@ -16,124 +15,29 @@ import {
 } from "@xyflow/react";
 import { useCallback, useState } from "react";
 
+import React from "react";
 import { v4 as uuidv4 } from "uuid";
-import type { GraphNode } from "../../models/NodeTypes.model";
+import type { GraphNode } from "../models/NodeTypes.model";
+import CommentNodeComponent, {
+  bgColor as commentBgColor,
+} from "../nodes/components/CommentNodeComponent";
 import ConditionalNodeComponent, {
   bgColor as conditionBgColor,
-} from "../../nodes/components/ConditionalNodeComponent";
+} from "../nodes/components/ConditionalNodeComponent";
 import EventNodeComponent, {
   bgColor as eventBgColor,
-} from "../../nodes/components/EventNodeComponent";
+} from "../nodes/components/EventNodeComponent";
 import QuestionNodeComponent, {
   bgColor as questionBgColor,
-} from "../../nodes/components/QuestionNodeComponent";
+} from "../nodes/components/QuestionNodeComponent";
 import StatementNodeComponent, {
   bgColor as statementBgColor,
-} from "../../nodes/components/StatementNodeComponent";
-import { toXYFlowEdges, toXYFlowNodes } from "../../nodes/utils/xyflowAdapter";
-import SidebarEditor from "../editModal/components/SidebarEditor";
-import AddNodeButton from "./AddNodeButton";
-const initialGraphNodes: GraphNode[] = [
-  {
-    id: uuidv4(),
-    type: "statement",
-    next_node: "2",
-    node_info: {
-      position: { x: 0, y: 0 },
-      title: "Inizio",
-
-      color: "#4e73df",
-    },
-    data: {
-      speaker: "Matthew",
-      mood: "Annoyed",
-      text: "Benvenuto nel villaggio!",
-    },
-  },
-  {
-    id: uuidv4(),
-    type: "condition",
-    node_info: {
-      position: { x: 40, y: 150 },
-      title: "Condizionale",
-
-      color: "#fc7bdbff",
-    },
-    next_node_true: "3",
-    next_node_false: "4",
-    data: {
-      condition: "someCondition",
-    },
-  },
-  {
-    id: uuidv4(),
-    type: "event",
-    node_info: {
-      position: { x: -100, y: 250 },
-      title: "Funzione",
-
-      color: "#FFA500",
-    },
-    data: {
-      event_name: "startCinematic",
-      parameters: {
-        param: 5,
-      },
-    },
-    next_node: "",
-  },
-  {
-    id: uuidv4(),
-    type: "question",
-    node_info: {
-      position: { x: 200, y: 250 },
-      title: "Domanda",
-
-      color: "#33cfbaff",
-    },
-    data: {
-      speaker: "Gregson",
-      mood: "curious",
-      text: "Che hai fatto a quell'ora, Evans?!",
-    },
-    choices: [
-      {
-        index: 0,
-        text: "Parco",
-        next_node: "",
-      },
-      {
-        index: 1,
-        text: "Casa",
-        next_node: "",
-      },
-      {
-        index: 2,
-        text: "Casa vittima",
-        next_node: "",
-      },
-    ],
-  },
-  {
-    id: uuidv4(),
-    type: "statement",
-    next_node: "",
-    node_info: {
-      position: { x: 100, y: 350 },
-      title: "Inizio",
-
-      color: "#4e73df",
-    },
-    data: {
-      speaker: "Matthew",
-      mood: "Annoyed",
-      text: "Benvenuto nel villaggio!",
-    },
-  },
-];
-
+} from "../nodes/components/StatementNodeComponent";
+import { toXYFlowEdges, toXYFlowNodes } from "../nodes/utils/xyflowAdapter";
+import SideBar from "../sidebar/components/Sidebar";
+import FloatingToolbar from "../toolbar/components/FloatingToolbar";
 function createGraphNode(
-  type: "statement" | "question" | "condition" | "event",
+  type: "statement" | "question" | "condition" | "event" | "comment",
   id: string,
   position = { x: 100, y: 100 }
 ): GraphNode {
@@ -192,12 +96,25 @@ function createGraphNode(
         next_node: "",
         node_info: {
           position,
-          title: "Nuovo Event",
+          title: "Nuovo Evento",
           color: eventBgColor,
         },
         data: {
           event_name: "unEvento",
           parameters: { someParam: 7 },
+        },
+      };
+    case "comment":
+      return {
+        id,
+        type,
+        node_info: {
+          position,
+          title: "Nuovo Commento",
+          color: commentBgColor,
+        },
+        data: {
+          text: "# Questo è un commento",
         },
       };
   }
@@ -209,13 +126,15 @@ const nodeTypes = {
   condition: ConditionalNodeComponent,
   question: QuestionNodeComponent,
   event: EventNodeComponent,
+  comment: CommentNodeComponent,
 };
+export let devMode: boolean = false;
 
 export default function GraphEditor() {
-  const initialNodes = toXYFlowNodes(initialGraphNodes);
-  const initialEdges = toXYFlowEdges(initialGraphNodes);
+  const initialNodes = toXYFlowNodes([]);
+  const initialEdges = toXYFlowEdges([]);
 
-  const [flowNodes, setFlowNodes] = useNodesState(initialNodes);
+  const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
 
   const [editingElement, setEditingElement] = useState<Node | Edge | null>(
@@ -226,7 +145,7 @@ export default function GraphEditor() {
   // handler to create and add a new node
   const handleAddNode = useCallback(
     (
-      type: "statement" | "question" | "condition" | "event",
+      type: "statement" | "question" | "condition" | "event" | "comment",
       position = { x: 100, y: 100 }
     ) => {
       const newId = uuidv4();
@@ -240,13 +159,6 @@ export default function GraphEditor() {
       setFlowNodes((prev) => [...prev, newFlowNode]);
     },
     [createGraphNode, setFlowNodes]
-  );
-
-  const onNodesChange = useCallback(
-    (changes: any) => {
-      setFlowNodes((nds) => applyNodeChanges(changes, nds));
-    },
-    [setFlowNodes]
   );
 
   const onConnect = useCallback(
@@ -264,15 +176,15 @@ export default function GraphEditor() {
   );
 
   // handler to delete a node and its edges
-  const handleDeleteNode = useCallback(
-    (deletedId: string) => {
-      setFlowNodes((nodes) => nodes.filter((n) => n.id !== deletedId));
-      setEdges((edges) =>
-        edges.filter((e) => e.source !== deletedId && e.target !== deletedId)
-      );
-    },
-    [setFlowNodes, setEdges]
-  );
+  // const handleDeleteNode = useCallback(
+  //   (deletedId: string) => {
+  //     setFlowNodes((nodes) => nodes.filter((n) => n.id !== deletedId));
+  //     setEdges((edges) =>
+  //       edges.filter((e) => e.source !== deletedId && e.target !== deletedId)
+  //     );
+  //   },
+  //   [setFlowNodes, setEdges]
+  // );
 
   const handleSaveNode = (updatedNode: Record<string, any>) => {
     const node = updatedNode as Node;
@@ -301,6 +213,9 @@ export default function GraphEditor() {
         case "event":
           setEditingElement(node);
           break;
+        case "comment":
+          setEditingElement(node);
+          break;
       }
       setSidebarOpen(true);
     },
@@ -314,14 +229,13 @@ export default function GraphEditor() {
     },
     []
   );
-  const onSidebarClose = () => {
+  const handleSidebarClose = () => {
     setEditingElement(null);
     setSidebarOpen(false);
   };
 
   return (
     <div style={{ width: "100%", height: "100vh" }}>
-      {/* <AddNodeButton onClick={() => handleAddNode("statement")} /> */}
       <ReactFlowProvider>
         <ReactFlow
           selectionMode={SelectionMode.Partial}
@@ -344,7 +258,7 @@ export default function GraphEditor() {
             showInteractive={false}
             position="bottom-center"
             orientation="horizontal"
-            className="rounded-md shadow-none border border-gray-50 p-1 bg-surface-light bg-opacity-60"
+            className=""
             style={{
               display: "flex",
               flexDirection: "row",
@@ -353,35 +267,16 @@ export default function GraphEditor() {
               marginTop: 20,
             }}
           >
-            <AddNodeButton
-              type="statement"
-              color={statementBgColor}
-              onAddNode={handleAddNode}
-            />
-            <AddNodeButton
-              type="question"
-              color={questionBgColor}
-              onAddNode={handleAddNode}
-            />
-            <AddNodeButton
-              type="condition"
-              color={conditionBgColor}
-              onAddNode={handleAddNode}
-            />
-            <AddNodeButton
-              type="event"
-              color={eventBgColor}
-              onAddNode={handleAddNode}
-            />
+            <FloatingToolbar onAddNode={handleAddNode} />
           </Controls>
         </ReactFlow>
-        <SidebarEditor
+        <SideBar
           selectedElement={editingElement}
           open={sidebarOpen}
-          onClose={onSidebarClose}
+          onClose={handleSidebarClose}
           onSaveNode={handleSaveNode}
           onSaveEdge={handleSaveEdge}
-        ></SidebarEditor>
+        ></SideBar>
       </ReactFlowProvider>
     </div>
   );

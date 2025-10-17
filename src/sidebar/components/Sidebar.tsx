@@ -1,8 +1,9 @@
-// src/components/SidebarEditor.tsx
+// src/components/Sidebar.tsx
 import { Box, Divider, Drawer, IconButton, Typography } from "@mui/material";
 import type { Edge, Node } from "@xyflow/react";
 import { type ReactNode } from "react";
 import EdgeEditor from "./EdgeEditor";
+import NodeEditor from "./NodeEditor";
 
 // (in futuro aggiungeremo anche NodeEditor ecc.)
 
@@ -14,7 +15,7 @@ interface SidebarEditorProps {
   onSaveEdge: (edge: Edge) => void;
 }
 
-function SidebarEditor({
+function Sidebar({
   open,
   onClose,
   selectedElement,
@@ -30,7 +31,7 @@ function SidebarEditor({
       );
 
     if ("source" in selectedElement) {
-      // È un Edge
+      // Se ha la proprietà source è un Edge
       return (
         <EdgeEditor
           edge={selectedElement}
@@ -41,11 +42,15 @@ function SidebarEditor({
         />
       );
     } else {
-      // È un Node (in futuro gestiremo i tipi)
+      // Altrimenti è un Node
       return (
-        <Typography color="text.secondary" fontSize={14}>
-          Qui andrà il NodeEditor per i nodi di tipo {selectedElement.type}.
-        </Typography>
+        <>
+          <NodeEditor
+            node={selectedElement}
+            onCancel={onClose}
+            onSave={(updated) => onSaveNode(updated as any as Node)}
+          />
+        </>
       );
     }
   };
@@ -143,6 +148,14 @@ function SidebarEditor({
           gap: 2,
         }}
       >
+        {selectedElement?.id ? (
+          <Typography variant="subtitle1" fontWeight={600}>
+            ID: {selectedElement.id}
+          </Typography>
+        ) : (
+          <></>
+        )}
+
         {renderContent()}
       </Box>
 
@@ -161,4 +174,4 @@ function SidebarEditor({
   );
 }
 
-export default SidebarEditor;
+export default Sidebar;
