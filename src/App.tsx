@@ -1,6 +1,6 @@
 import "@xyflow/react/dist/style.css";
 
-import GraphEditor from "./editor/components/GraphEditor";
+import GraphEditor from "./editor/GraphEditor";
 
 export default function App() {
   return (

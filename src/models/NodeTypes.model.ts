@@ -1,5 +1,6 @@
 import type { DialogueChoice } from "./DialogueChoice.model";
 import type {
+  CommentNodeData,
   ConditionalNodeData,
   DialogueNodeData,
   EventNodeData,
@@ -12,7 +13,8 @@ export type GraphNode =
   | StatementNode
   | QuestionNode
   | ConditionalNode
-  | EventNode;
+  | EventNode
+  | CommentNode;
 
 export interface BaseNode {
   id: string;
@@ -43,4 +45,9 @@ export interface EventNode extends BaseNode {
   type: "event";
   data: EventNodeData;
   next_node: string;
+}
+
+export interface CommentNode extends BaseNode {
+  type: "comment";
+  data: CommentNodeData;
 }

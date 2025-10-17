@@ -5,7 +5,8 @@ import type { TextModifier } from "./TextModifiers.model";
 export type GraphNodeData =
   | DialogueNodeData
   | ConditionalNodeData
-  | EventNodeData;
+  | EventNodeData
+  | CommentNodeData;
 
 export interface DialogueNodeData {
   speaker: string;
@@ -21,4 +22,8 @@ export interface ConditionalNodeData {
 export interface EventNodeData {
   event_name: string;
   parameters: Record<string, any>;
+}
+
+export interface CommentNodeData {
+  text: string;
 }
