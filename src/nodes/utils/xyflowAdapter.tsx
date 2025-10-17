@@ -58,13 +58,7 @@ export function toXYFlowEdge(node: GraphNode): Edge[] {
         },
       ];
     case "comment":
-      return [
-        {
-          id: "",
-          source: "",
-          target: "",
-        },
-      ];
+      return [];
   }
 }
 
