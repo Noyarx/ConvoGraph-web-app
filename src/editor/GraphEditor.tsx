@@ -199,7 +199,7 @@ export default function GraphEditor() {
   };
 
   const handleNodeClick: NodeMouseHandler<Node> = useCallback(
-    (e: React.MouseEvent<Element, MouseEvent>, node: Node) => {
+    (_e: React.MouseEvent<Element, MouseEvent>, node: Node) => {
       switch (node.type) {
         case "statement":
           setEditingElement(node);
@@ -223,7 +223,7 @@ export default function GraphEditor() {
   );
 
   const handleEdgeClick: EdgeMouseHandler<Edge> = useCallback(
-    (e: React.MouseEvent<Element, MouseEvent>, edge: Edge) => {
+    (_e: React.MouseEvent<Element, MouseEvent>, edge: Edge) => {
       setEditingElement(edge);
       setSidebarOpen(true);
     },
