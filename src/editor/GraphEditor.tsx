@@ -43,6 +43,7 @@ import {
 } from "../nodes/utils/xyflowAdapter";
 import SideBar from "../sidebar/components/Sidebar";
 import FloatingToolbar from "../toolbar/components/FloatingToolbar";
+import { PersistSidebar } from "../features/persist/components/PersistSidebar";
 function createGraphNode(
   type: "statement" | "question" | "condition" | "event" | "comment",
   id: string,
@@ -278,6 +279,7 @@ export default function GraphEditor() {
 
   return (
     <div style={{ width: "100%", height: "100vh" }}>
+      <PersistSidebar />
       <ReactFlow
         selectionMode={SelectionMode.Partial}
         connectionRadius={30}
