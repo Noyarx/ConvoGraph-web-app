@@ -19,7 +19,13 @@ function EdgeEditor({ edge, onSave, onCancel }: EdgeEditorProps) {
 
   const handleSubmit: FormEventHandler = (e: React.FormEvent) => {
     e.preventDefault();
-    const updatedEdge = { ...edge, label };
+    // create a new edge containing edge data + new label
+    // also update the data text property as the new label
+    const updatedEdge: Edge = {
+      ...edge,
+      label,
+      data: { ...edge.data, text: label },
+    };
     if (updatedEdge === edge) return;
     onSave(updatedEdge);
   };

@@ -8,6 +8,7 @@ import {
   SelectionMode,
   useEdgesState,
   useNodesState,
+  useReactFlow,
   type Connection,
   type Edge,
   type EdgeMouseHandler,
@@ -137,6 +138,7 @@ const nodeTypes = {
 export let devMode: boolean = false;
 
 export default function GraphEditor() {
+  const { screenToFlowPosition } = useReactFlow();
   const initialNodes = toXYFlowNodes([]);
   const initialEdges = toXYFlowEdges([]);
 
@@ -146,7 +148,6 @@ export default function GraphEditor() {
   const [editingElement, setEditingElement] = useState<Node | Edge | null>(
     null
   );
-
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
   // handler to import node tree from json file
@@ -163,14 +164,17 @@ export default function GraphEditor() {
   const handleAddNode = useCallback(
     (
       type: "statement" | "question" | "condition" | "event" | "comment",
-      position = { x: 100, y: 100 }
+      position = screenToFlowPosition({
+        x: screen.width / 2,
+        y: screen.height / 2,
+      })
     ) => {
       const newId = uuidv4();
       const newFlowNode = {
         type,
         id: newId,
         position,
-        data: createGraphNode(type, newId) as any,
+        data: createGraphNode(type, newId, position) as any,
       };
       // Create a new GraphNode using an incrementing number 'incr' as id
       setFlowNodes((prev) => [...prev, newFlowNode]);
