@@ -4,7 +4,6 @@ import {
   Controls,
   Panel,
   ReactFlow,
-  ReactFlowProvider,
   SelectionMode,
   useEdgesState,
   useNodesState,
@@ -136,7 +135,6 @@ const nodeTypes = {
   event: EventNodeComponent,
   comment: CommentNodeComponent,
 };
-export let devMode: boolean = false;
 
 export default function GraphEditor() {
   const { screenToFlowPosition } = useReactFlow();
