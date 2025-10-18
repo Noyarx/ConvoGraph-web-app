@@ -2,6 +2,7 @@ import {
   addEdge,
   Background,
   Controls,
+  Panel,
   ReactFlow,
   ReactFlowProvider,
   SelectionMode,
@@ -17,6 +18,7 @@ import { useCallback, useState } from "react";
 
 import React from "react";
 import { v4 as uuidv4 } from "uuid";
+import Header from "../header/components/Header";
 import type { GraphNode } from "../models/NodeTypes.model";
 import CommentNodeComponent, {
   bgColor as commentBgColor,
@@ -142,6 +144,17 @@ export default function GraphEditor() {
   );
 
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+
+  // handler to import node tree from json file
+  const handleImport = useCallback(() => {
+    return [];
+  }, []);
+  // handler to export node tree and download the json file
+  const handleExport = useCallback(() => {
+    const graphTree = { nodes: flowToGraphTree(flowNodes, edges) };
+    console.log(graphTree);
+  }, [flowNodes, edges]);
+
   // handler to create and add a new node
   const handleAddNode = useCallback(
     (
