@@ -20,6 +20,7 @@ import { useCallback, useState } from "react";
 import React from "react";
 import { v4 as uuidv4 } from "uuid";
 import Header from "../header/components/Header";
+import type { DialogueChoice } from "../models/DialogueChoice.model";
 import type { GraphNode } from "../models/NodeTypes.model";
 import CommentNodeComponent, {
   bgColor as commentBgColor,
@@ -187,13 +188,33 @@ export default function GraphEditor() {
       const editedEdge = { ...params } as Edge;
       const isNewEdge = !editedEdge.id;
       if (isNewEdge) editedEdge.id = `${uuidv4()}`;
+
+      // find the node this edge is coming from
+      const sourceNode: Node = flowNodes.find(
+        (n) => n.id === params.source
+      ) as Node;
+
+      if (sourceNode?.type === "question") {
+        // add a empty choice to question node choices list
+        const choices = sourceNode.data.choices as DialogueChoice[];
+        choices.push({} as DialogueChoice);
+        // populate new choices with this edge data
+        const choice = {
+          index: choices.length - 1,
+          text: editedEdge.label,
+          next_node: editedEdge.target,
+        } as DialogueChoice;
+        // set this edge's data as the choice it's representing
+        editedEdge.data = choice as Record<string, any>;
+      }
+      // update edges list with new edge
       setEdges((eds) => addEdge(editedEdge, eds));
 
       // open the edit modal only if the source node is a question
       setEditingElement(editedEdge);
       setSidebarOpen(true);
     },
-    [setEdges]
+    [setEdges, flowNodes]
   );
 
   // handler to delete a node and its edges
@@ -240,7 +261,7 @@ export default function GraphEditor() {
       }
       setSidebarOpen(true);
     },
-    []
+    [flowNodes]
   );
 
   const handleEdgeClick: EdgeMouseHandler<Edge> = useCallback(
@@ -248,7 +269,7 @@ export default function GraphEditor() {
       setEditingElement(edge);
       setSidebarOpen(true);
     },
-    []
+    [edges]
   );
   const handleSidebarClose = () => {
     setEditingElement(null);
