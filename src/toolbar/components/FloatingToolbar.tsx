@@ -1,11 +1,13 @@
-import { Button, Menu } from "@material-tailwind/react";
-import { KeyboardArrowUpRounded } from "@mui/icons-material";
+import { Button, IconButton, Menu } from "@material-tailwind/react";
+import { FileDownload, KeyboardArrowUpRounded, Share, ShareLocation } from "@mui/icons-material";
 import AltRouteRoundedIcon from "@mui/icons-material/AltRouteRounded";
 import ChatOutlinedIcon from "@mui/icons-material/ChatOutlined";
 import NewReleasesRoundedIcon from "@mui/icons-material/NewReleasesRounded";
 import QuestionMarkIcon from "@mui/icons-material/QuestionMark";
 import TagIcon from "@mui/icons-material/Tag";
 import { Stack } from "@mui/material";
+import { flowToGraphEdges } from "../../nodes/utils/xyflowAdapter";
+import { useReactFlow } from "@xyflow/react";
 
 const flexGapped = "flex gap-2";
 const quickColorTrans = {
@@ -32,6 +34,7 @@ interface FloatingToolbarProps {
 }
 
 function FloatingToolbar({ onAddNode, placement }: FloatingToolbarProps) {
+  const { getNodes, getEdges } = useReactFlow()
   return (
     <Stack
       direction={"row"}
@@ -114,6 +117,7 @@ function FloatingToolbar({ onAddNode, placement }: FloatingToolbarProps) {
           </Menu.Item>
         </Menu.Content>
       </Menu>
+      <Button onClick={() => console.log("Exported", flowToGraphEdges(getNodes(), getEdges()))}> <FileDownload /> Export </ Button>
     </Stack>
   );
 }
