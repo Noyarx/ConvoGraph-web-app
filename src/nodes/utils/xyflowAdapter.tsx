@@ -129,7 +129,6 @@ export function flowToGraphEdges(nodes: Node[], edges: Edge[]): GraphNode[] {
         }
         break;
       case "question":
-        console.log("Processing question edge:", el);
         const choice: DialogueChoice = {
           next_node: el.target,
           text: el.label ? (el.label + "") : "",
