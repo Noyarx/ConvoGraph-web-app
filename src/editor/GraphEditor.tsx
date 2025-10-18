@@ -2,11 +2,13 @@ import {
   addEdge,
   Background,
   Controls,
+  Panel,
   ReactFlow,
   ReactFlowProvider,
   SelectionMode,
   useEdgesState,
   useNodesState,
+  useReactFlow,
   type Connection,
   type Edge,
   type EdgeMouseHandler,
@@ -17,6 +19,8 @@ import { useCallback, useState } from "react";
 
 import React from "react";
 import { v4 as uuidv4 } from "uuid";
+import Header from "../header/components/Header";
+import type { DialogueChoice } from "../models/DialogueChoice.model";
 import type { GraphNode } from "../models/NodeTypes.model";
 import CommentNodeComponent, {
   bgColor as commentBgColor,
@@ -33,7 +37,11 @@ import QuestionNodeComponent, {
 import StatementNodeComponent, {
   bgColor as statementBgColor,
 } from "../nodes/components/StatementNodeComponent";
-import { toXYFlowEdges, toXYFlowNodes } from "../nodes/utils/xyflowAdapter";
+import {
+  flowToGraphTree,
+  toXYFlowEdges,
+  toXYFlowNodes,
+} from "../nodes/utils/xyflowAdapter";
 import SideBar from "../sidebar/components/Sidebar";
 import FloatingToolbar from "../toolbar/components/FloatingToolbar";
 function createGraphNode(
@@ -131,6 +139,7 @@ const nodeTypes = {
 export let devMode: boolean = false;
 
 export default function GraphEditor() {
+  const { screenToFlowPosition } = useReactFlow();
   const initialNodes = toXYFlowNodes([]);
   const initialEdges = toXYFlowEdges([]);
 
@@ -140,20 +149,33 @@ export default function GraphEditor() {
   const [editingElement, setEditingElement] = useState<Node | Edge | null>(
     null
   );
-
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+
+  // handler to import node tree from json file
+  const handleImport = useCallback(() => {
+    return [];
+  }, []);
+  // handler to export node tree and download the json file
+  const handleExport = useCallback(() => {
+    const graphTree = { nodes: flowToGraphTree(flowNodes, edges) };
+    console.log(graphTree);
+  }, [flowNodes, edges]);
+
   // handler to create and add a new node
   const handleAddNode = useCallback(
     (
       type: "statement" | "question" | "condition" | "event" | "comment",
-      position = { x: 100, y: 100 }
+      position = screenToFlowPosition({
+        x: screen.width / 2,
+        y: screen.height / 2,
+      })
     ) => {
       const newId = uuidv4();
       const newFlowNode = {
         type,
         id: newId,
         position,
-        data: createGraphNode(type, newId) as any,
+        data: createGraphNode(type, newId, position) as any,
       };
       // Create a new GraphNode using an incrementing number 'incr' as id
       setFlowNodes((prev) => [...prev, newFlowNode]);
@@ -166,13 +188,33 @@ export default function GraphEditor() {
       const editedEdge = { ...params } as Edge;
       const isNewEdge = !editedEdge.id;
       if (isNewEdge) editedEdge.id = `${uuidv4()}`;
+
+      // find the node this edge is coming from
+      const sourceNode: Node = flowNodes.find(
+        (n) => n.id === params.source
+      ) as Node;
+
+      if (sourceNode?.type === "question") {
+        // add a empty choice to question node choices list
+        const choices = sourceNode.data.choices as DialogueChoice[];
+        choices.push({} as DialogueChoice);
+        // populate new choices with this edge data
+        const choice = {
+          index: choices.length - 1,
+          text: editedEdge.label,
+          next_node: editedEdge.target,
+        } as DialogueChoice;
+        // set this edge's data as the choice it's representing
+        editedEdge.data = choice as Record<string, any>;
+      }
+      // update edges list with new edge
       setEdges((eds) => addEdge(editedEdge, eds));
 
       // open the edit modal only if the source node is a question
       setEditingElement(editedEdge);
       setSidebarOpen(true);
     },
-    [setEdges]
+    [setEdges, flowNodes]
   );
 
   // handler to delete a node and its edges
@@ -200,6 +242,7 @@ export default function GraphEditor() {
 
   const handleNodeClick: NodeMouseHandler<Node> = useCallback(
     (_e: React.MouseEvent<Element, MouseEvent>, node: Node) => {
+      // console.log(node);
       switch (node.type) {
         case "statement":
           setEditingElement(node);
@@ -219,15 +262,16 @@ export default function GraphEditor() {
       }
       setSidebarOpen(true);
     },
-    []
+    [flowNodes]
   );
 
   const handleEdgeClick: EdgeMouseHandler<Edge> = useCallback(
     (_e: React.MouseEvent<Element, MouseEvent>, edge: Edge) => {
+      // console.log(edge);
       setEditingElement(edge);
       setSidebarOpen(true);
     },
-    []
+    [edges]
   );
   const handleSidebarClose = () => {
     setEditingElement(null);
@@ -236,48 +280,49 @@ export default function GraphEditor() {
 
   return (
     <div style={{ width: "100%", height: "100vh" }}>
-      <ReactFlowProvider>
-        <ReactFlow
-          selectionMode={SelectionMode.Partial}
-          connectionRadius={30}
-          nodes={flowNodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onNodeClick={handleNodeClick}
-          onEdgeClick={handleEdgeClick}
-          nodeTypes={nodeTypes}
-          fitView
-          minZoom={0.2}
+      <ReactFlow
+        selectionMode={SelectionMode.Partial}
+        connectionRadius={30}
+        nodes={flowNodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onNodeClick={handleNodeClick}
+        onEdgeClick={handleEdgeClick}
+        nodeTypes={nodeTypes}
+        fitView
+        minZoom={0.2}
+      >
+        <Panel className="flex flex-row">
+          <Header onImport={handleImport} onExport={handleExport} />
+        </Panel>
+        <Background />
+        <Controls
+          showZoom={false}
+          showFitView={false}
+          showInteractive={false}
+          position="bottom-center"
+          orientation="horizontal"
+          className=""
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            columnGap: 8,
+            justifyContent: "space-between",
+            marginTop: 20,
+          }}
         >
-          <Background />
-          <Controls
-            showZoom={false}
-            showFitView={false}
-            showInteractive={false}
-            position="bottom-center"
-            orientation="horizontal"
-            className=""
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              columnGap: 8,
-              justifyContent: "space-between",
-              marginTop: 20,
-            }}
-          >
-            <FloatingToolbar onAddNode={handleAddNode} />
-          </Controls>
-        </ReactFlow>
-        <SideBar
-          selectedElement={editingElement}
-          open={sidebarOpen}
-          onClose={handleSidebarClose}
-          onSaveNode={handleSaveNode}
-          onSaveEdge={handleSaveEdge}
-        ></SideBar>
-      </ReactFlowProvider>
+          <FloatingToolbar onAddNode={handleAddNode} />
+        </Controls>
+      </ReactFlow>
+      <SideBar
+        selectedElement={editingElement}
+        open={sidebarOpen}
+        onClose={handleSidebarClose}
+        onSaveNode={handleSaveNode}
+        onSaveEdge={handleSaveEdge}
+      ></SideBar>
     </div>
   );
 }
