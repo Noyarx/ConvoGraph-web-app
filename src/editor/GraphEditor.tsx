@@ -35,7 +35,11 @@ import QuestionNodeComponent, {
 import StatementNodeComponent, {
   bgColor as statementBgColor,
 } from "../nodes/components/StatementNodeComponent";
-import { toXYFlowEdges, toXYFlowNodes } from "../nodes/utils/xyflowAdapter";
+import {
+  flowToGraphTree,
+  toXYFlowEdges,
+  toXYFlowNodes,
+} from "../nodes/utils/xyflowAdapter";
 import SideBar from "../sidebar/components/Sidebar";
 import FloatingToolbar from "../toolbar/components/FloatingToolbar";
 function createGraphNode(
@@ -249,48 +253,49 @@ export default function GraphEditor() {
 
   return (
     <div style={{ width: "100%", height: "100vh" }}>
-      <ReactFlowProvider>
-        <ReactFlow
-          selectionMode={SelectionMode.Partial}
-          connectionRadius={30}
-          nodes={flowNodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onNodeClick={handleNodeClick}
-          onEdgeClick={handleEdgeClick}
-          nodeTypes={nodeTypes}
-          fitView
-          minZoom={0.2}
+      <ReactFlow
+        selectionMode={SelectionMode.Partial}
+        connectionRadius={30}
+        nodes={flowNodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onNodeClick={handleNodeClick}
+        onEdgeClick={handleEdgeClick}
+        nodeTypes={nodeTypes}
+        fitView
+        minZoom={0.2}
+      >
+        <Panel className="flex flex-row">
+          <Header onImport={handleImport} onExport={handleExport} />
+        </Panel>
+        <Background />
+        <Controls
+          showZoom={false}
+          showFitView={false}
+          showInteractive={false}
+          position="bottom-center"
+          orientation="horizontal"
+          className=""
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            columnGap: 8,
+            justifyContent: "space-between",
+            marginTop: 20,
+          }}
         >
-          <Background />
-          <Controls
-            showZoom={false}
-            showFitView={false}
-            showInteractive={false}
-            position="bottom-center"
-            orientation="horizontal"
-            className=""
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              columnGap: 8,
-              justifyContent: "space-between",
-              marginTop: 20,
-            }}
-          >
-            <FloatingToolbar onAddNode={handleAddNode} />
-          </Controls>
-        </ReactFlow>
-        <SideBar
-          selectedElement={editingElement}
-          open={sidebarOpen}
-          onClose={handleSidebarClose}
-          onSaveNode={handleSaveNode}
-          onSaveEdge={handleSaveEdge}
-        ></SideBar>
-      </ReactFlowProvider>
+          <FloatingToolbar onAddNode={handleAddNode} />
+        </Controls>
+      </ReactFlow>
+      <SideBar
+        selectedElement={editingElement}
+        open={sidebarOpen}
+        onClose={handleSidebarClose}
+        onSaveNode={handleSaveNode}
+        onSaveEdge={handleSaveEdge}
+      ></SideBar>
     </div>
   );
 }
