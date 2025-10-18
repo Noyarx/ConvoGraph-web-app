@@ -1,14 +1,12 @@
 import { Button } from "@material-tailwind/react";
 
-import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
+import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
+import { useReactFlow } from "@xyflow/react";
+import { flowToGraphTree } from "../../nodes/utils/xyflowAdapter";
 
-interface HeaderProps {
-  onImport: () => any[];
-  onExport: () => void;
-}
-
-function Header({ onImport, onExport }: HeaderProps) {
+function Header() {
+  const { getNodes, getEdges } = useReactFlow();
   return (
     <div className="fixed top-0 left-0 !m-0 w-screen pointer-events-none">
       <div className="bg-gradient-to-b from-slate-300 to-slate-50">
@@ -19,7 +17,6 @@ function Header({ onImport, onExport }: HeaderProps) {
               className="flex flex-row p-2 gap-2 justify-between"
               type="button"
               variant="gradient"
-              onClick={onImport}
             >
               <p>
                 <strong>Import</strong>
@@ -30,7 +27,9 @@ function Header({ onImport, onExport }: HeaderProps) {
               className="flex flex-row p-2 gap-2 justify-between"
               type="button"
               variant="gradient"
-              onClick={onExport}
+              onClick={() =>
+                console.log("Exported", flowToGraphTree(getNodes(), getEdges()))
+              }
             >
               <p>
                 <strong>Export</strong>
