@@ -43,18 +43,18 @@ export function toXYFlowEdge(node: GraphNode): Edge[] {
     case "condition":
       return [
         {
-          id: node.type + "-" + node.id + "-" + node.next_node_true,
-          source: node.id,
-          sourceHandle: "left",
-          target: node.next_node_true,
-          data: { source: "next_node_true" },
-        },
-        {
           id: node.type + "-" + node.id + "-" + node.next_node_false,
           source: node.id,
-          sourceHandle: "right",
+          sourceHandle: "left",
           target: node.next_node_false,
           data: { source: "next_node_false" },
+        },
+        {
+          id: node.type + "-" + node.id + "-" + node.next_node_true,
+          source: node.id,
+          sourceHandle: "right",
+          target: node.next_node_true,
+          data: { source: "next_node_true" },
         },
       ];
     case "comment":
@@ -84,7 +84,7 @@ export function flowToGraphNodes(nodes: Node[]): GraphNode[] {
 }
 
 // Function to remap ReactFlow nodes and edges into GraphNodes
-export function flowToGraphEdges(nodes: Node[], edges: Edge[]): GraphNode[] {
+export function flowToGraphTree(nodes: Node[], edges: Edge[]): GraphNode[] {
   let graphNodes: GraphNode[] = nodes.map((e) => e.data as any as GraphNode);
 
   // Reset next_node value for every type of GraphNode
