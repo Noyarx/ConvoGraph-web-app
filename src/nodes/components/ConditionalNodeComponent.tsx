@@ -31,6 +31,7 @@ function ConditionalNodeComponent(flowNode: Pick<Node, "data">) {
           backgroundColor: "darkorange",
         }}
         type="source"
+        id={"left"}
         position={Position.Left}
       />
       <Handle
@@ -40,6 +41,7 @@ function ConditionalNodeComponent(flowNode: Pick<Node, "data">) {
           backgroundColor: "darkorange",
         }}
         type="source"
+        id={"right"}
         position={Position.Right}
       />
     </div>

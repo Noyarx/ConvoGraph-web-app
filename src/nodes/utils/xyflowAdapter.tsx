@@ -1,6 +1,7 @@
 import { StepEdge, type Edge, type Node } from "@xyflow/react";
 import type { DialogueChoice } from "../../models/DialogueChoice.model";
 import type { GraphNode } from "../../models/NodeTypes.model";
+import type { TextModifier } from "../../models/TextModifiers.model";
 
 //#region GraphNode-ReactFlow
 
@@ -128,8 +129,12 @@ export function flowToGraphEdges(nodes: Node[], edges: Edge[]): GraphNode[] {
         }
         break;
       case "question":
-        const choice = el.data as any as DialogueChoice;
-        choice.next_node = el.target;
+        const choice: DialogueChoice = {
+          next_node: el.target,
+          text: el.label ? (el.label + "") : "",
+          text_modifier: el?.data?.text_modifier as TextModifier[] || [], // TODO in edit modal user can set text modifiers in edge data
+          index: el?.data?.index as number ?? sourceNode.choices.length, // TODO in edit modal user can set choice index (order) in edge data
+        };
         sourceNode.choices.push(choice);
         break;
     }
