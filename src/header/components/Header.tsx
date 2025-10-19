@@ -21,11 +21,7 @@ function Header() {
   const handleImport = async () => {
     const importedTree = await importTreeFromJSON();
     // set reactflow tree graph
-    if (
-      importedTree &&
-      importedTree !== null &&
-      typeof importedTree === typeof graphNodes
-    ) {
+    if (importedTree) {
       setNodes(toXYFlowNodes(importedTree));
       setEdges(toXYFlowEdges(importedTree));
     }
