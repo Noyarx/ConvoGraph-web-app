@@ -3,7 +3,7 @@ import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
 import { useReactFlow } from "@xyflow/react";
 import exportTimelineToJSON from "../../export/JsonExport";
-import { importTimelineFromJSON } from "../../import/jsonImport";
+import { importTimelineFromJSON } from "../../import/JsonImport";
 import {
   flowToGraphTree,
   toXYFlowEdges,
