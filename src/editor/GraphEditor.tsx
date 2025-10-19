@@ -36,11 +36,7 @@ import QuestionNodeComponent, {
 import StatementNodeComponent, {
   bgColor as statementBgColor,
 } from "../nodes/components/StatementNodeComponent";
-import {
-  flowToGraphTree,
-  toXYFlowEdges,
-  toXYFlowNodes,
-} from "../nodes/utils/xyflowAdapter";
+import { toXYFlowEdges, toXYFlowNodes } from "../nodes/utils/xyflowAdapter";
 import SideBar from "../sidebar/components/Sidebar";
 import FloatingToolbar from "../toolbar/components/FloatingToolbar";
 function createGraphNode(
@@ -148,16 +144,6 @@ export default function GraphEditor() {
     null
   );
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-
-  // handler to import node tree from json file
-  const handleImport = useCallback(() => {
-    return [];
-  }, []);
-  // handler to export node tree and download the json file
-  const handleExport = useCallback(() => {
-    const graphTree = { nodes: flowToGraphTree(flowNodes, edges) };
-    console.log(graphTree);
-  }, [flowNodes, edges]);
 
   // handler to create and add a new node
   const handleAddNode = useCallback(
@@ -293,7 +279,7 @@ export default function GraphEditor() {
         minZoom={0.2}
       >
         <Panel className="flex flex-row">
-          <Header onImport={handleImport} onExport={handleExport} />
+          <Header />
         </Panel>
         <Background />
         <Controls

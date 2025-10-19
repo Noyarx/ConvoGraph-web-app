@@ -2,16 +2,35 @@ import { Button } from "@material-tailwind/react";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
 import { useReactFlow } from "@xyflow/react";
-import { flowToGraphTree } from "../../nodes/utils/xyflowAdapter";
-import exportToJSON from "../../export/JsonConverter";
+import exportTreeToJSON from "../../export/JsonExport";
+import { importTreeFromJSON } from "../../import/jsonImport";
+import {
+  flowToGraphTree,
+  toXYFlowEdges,
+  toXYFlowNodes,
+} from "../../nodes/utils/xyflowAdapter";
 
 function Header() {
-  const { getNodes, getEdges } = useReactFlow();
+  const { getNodes, getEdges, setNodes, setEdges } = useReactFlow();
   const graphNodes = flowToGraphTree(getNodes(), getEdges());
 
   const handleExport = () => {
-    exportToJSON(graphNodes);
+    exportTreeToJSON(graphNodes);
   };
+
+  const handleImport = async () => {
+    const importedTree = await importTreeFromJSON();
+    // set reactflow tree graph
+    if (
+      importedTree &&
+      importedTree !== null &&
+      typeof importedTree === typeof graphNodes
+    ) {
+      setNodes(toXYFlowNodes(importedTree));
+      setEdges(toXYFlowEdges(importedTree));
+    }
+  };
+
   return (
     <div className="fixed top-0 left-0 !m-0 w-screen pointer-events-none">
       <div className="bg-gradient-to-b from-slate-300 to-slate-50">
@@ -22,6 +41,7 @@ function Header() {
               className="flex flex-row p-2 gap-2 justify-between"
               type="button"
               variant="gradient"
+              onClick={handleImport}
             >
               <p>
                 <strong>Import</strong>

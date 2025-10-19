@@ -1,4 +1,4 @@
-export default function exportToJSON(graphNodes: any[]) {
+export default function exportTreeToJSON(graphNodes: any[]) {
   // convert node list to json format
   const jsonString = JSON.stringify(graphNodes, null, 2);
   const blob = new Blob([jsonString], { type: "application/json" });
