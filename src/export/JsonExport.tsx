@@ -1,4 +1,4 @@
-export default function exportTimelineToJSON(graphNodes: any[]) {
+export function exportTimelineToJSON(graphNodes: any[]) {
   // Create timeline object adding info
   const timelineObj = {
     info: {
