@@ -2,7 +2,7 @@ import { Button } from "@material-tailwind/react";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
 import { useReactFlow } from "@xyflow/react";
-import exportTimelineToJSON from "../../export/JsonExport";
+import { exportTimelineToJSON } from "../../export/JsonExport";
 import { importTimelineFromJSON } from "../../import/JsonImport";
 import {
   flowToGraphTree,
