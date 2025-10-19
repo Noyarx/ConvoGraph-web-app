@@ -131,9 +131,9 @@ export function flowToGraphTree(nodes: Node[], edges: Edge[]): GraphNode[] {
       case "question":
         const choice: DialogueChoice = {
           next_node: el.target,
-          text: el.label ? (el.label + "") : "",
-          text_modifier: el?.data?.text_modifier as TextModifier[] || [], // TODO in edit modal user can set text modifiers in edge data
-          index: el?.data?.index as number ?? sourceNode.choices.length, // TODO in edit modal user can set choice index (order) in edge data
+          text: el.label ? el.label + "" : "",
+          text_modifier: (el?.data?.text_modifier as TextModifier[]) || [], // TODO in edit modal user can set text modifiers in edge data
+          index: (el?.data?.index as number) ?? sourceNode.choices.length, // TODO in edit modal user can set choice index (order) in edge data
         };
         sourceNode.choices.push(choice);
         break;

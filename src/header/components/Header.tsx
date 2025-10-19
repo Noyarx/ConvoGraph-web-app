@@ -2,8 +2,8 @@ import { Button } from "@material-tailwind/react";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
 import { useReactFlow } from "@xyflow/react";
-import exportTreeToJSON from "../../export/JsonExport";
-import { importTreeFromJSON } from "../../import/jsonImport";
+import exportTimelineToJSON from "../../export/JsonExport";
+import { importTimelineFromJSON } from "../../import/jsonImport";
 import {
   flowToGraphTree,
   toXYFlowEdges,
@@ -15,15 +15,17 @@ function Header() {
   const graphNodes = flowToGraphTree(getNodes(), getEdges());
 
   const handleExport = () => {
-    exportTreeToJSON(graphNodes);
+    exportTimelineToJSON(graphNodes);
   };
 
   const handleImport = async () => {
-    const importedTree = await importTreeFromJSON();
+    const importedTimeline = await importTimelineFromJSON();
+    const { nodes } = importedTimeline;
+    // console.log(importedTimeline);
     // set reactflow tree graph
-    if (importedTree) {
-      setNodes(toXYFlowNodes(importedTree));
-      setEdges(toXYFlowEdges(importedTree));
+    if (nodes) {
+      setNodes(toXYFlowNodes(nodes));
+      setEdges(toXYFlowEdges(nodes));
     }
   };
 
