@@ -1,7 +1,17 @@
 // src/components/Sidebar.tsx
-import { Box, Divider, Drawer, IconButton, Typography } from "@mui/material";
-import type { Edge, Node } from "@xyflow/react";
-import { type ReactNode } from "react";
+import { Button } from "@material-tailwind/react";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
+import {
+  Box,
+  Divider,
+  Drawer,
+  IconButton,
+  Stack,
+  Typography,
+} from "@mui/material";
+import { type Edge, type Node } from "@xyflow/react";
+import { useEffect, useState, type ReactNode } from "react";
 import EdgeEditor from "./EdgeEditor";
 import NodeEditor from "./NodeEditor";
 
@@ -22,6 +32,43 @@ function Sidebar({
   onSaveNode,
   onSaveEdge,
 }: SidebarEditorProps) {
+  const [element, setElement] = useState<Node | Edge | null>(selectedElement);
+  const [modified, setModified] = useState(false);
+
+  // update sidebar on newly selected node
+  useEffect(() => {
+    if (selectedElement) {
+      setElement(selectedElement);
+      setModified(false);
+    }
+  }, [selectedElement]);
+
+  // set modified based on wether the changed element is equal to the one before the changes or not
+  useEffect(() => {
+    if (!selectedElement || !element) return;
+    setModified(JSON.stringify(selectedElement) !== JSON.stringify(element));
+  }, [selectedElement, element]);
+
+  // send the changed nodes to GraphEditor
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedElement || !modified) return;
+    if ("source" in selectedElement) {
+      onSaveEdge(element as Edge);
+    } else {
+      onSaveNode(element as Node);
+    }
+    setModified(false);
+  };
+
+  function handleCancel(): void {
+    onClose();
+  }
+
+  function handleChange(value: any) {
+    setElement(value);
+  }
+
   const renderContent = (): ReactNode => {
     if (!selectedElement)
       return (
@@ -32,24 +79,12 @@ function Sidebar({
 
     if ("source" in selectedElement) {
       // Se ha la proprietà source è un Edge
-      return (
-        <EdgeEditor
-          edge={selectedElement}
-          onCancel={onClose}
-          onSave={(updated) => {
-            onSaveEdge(updated);
-          }}
-        />
-      );
+      return <EdgeEditor edge={selectedElement} onChange={handleChange} />;
     } else {
       // Altrimenti è un Node
       return (
         <>
-          <NodeEditor
-            node={selectedElement}
-            onCancel={onClose}
-            onSave={(updated) => onSaveNode(updated as any as Node)}
-          />
+          <NodeEditor node={selectedElement} onChange={handleChange} />
         </>
       );
     }
@@ -136,7 +171,6 @@ function Sidebar({
         </Typography>
         <span />
       </Box>
-
       {/* CONTENUTO */}
       <Box
         sx={{
@@ -155,10 +189,37 @@ function Sidebar({
         ) : (
           <></>
         )}
-
-        {renderContent()}
+        <form onSubmit={handleSubmit}>
+          {/* FORM MODULARE */}
+          {renderContent()}
+          {/* PULSANTI */}
+          <Stack
+            paddingTop={1.2}
+            direction={"row"}
+            justifyContent={"flex-start"}
+            gap={1.2}
+          >
+            <Button
+              type="submit"
+              disabled={modified ? false : true}
+              variant={modified ? "outline" : "ghost"}
+              color={modified ? "success" : "secondary"}
+              style={{ transition: "background-color 0.2s" }}
+            >
+              <CheckIcon />
+            </Button>
+            <Button
+              type="reset"
+              style={{ transition: "background-color 0.2s" }}
+              variant="outline"
+              color="error"
+              onClick={handleCancel}
+            >
+              <CloseIcon />
+            </Button>
+          </Stack>
+        </form>
       </Box>
-
       <Divider />
       <Box
         sx={{

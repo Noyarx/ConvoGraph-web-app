@@ -1,37 +1,34 @@
-import { Button, Input } from "@material-tailwind/react";
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
+import { Input } from "@material-tailwind/react";
 import { Stack } from "@mui/material";
 import { useNodes, type Edge } from "@xyflow/react";
-import { useEffect, useState, type FormEventHandler } from "react";
+import { useEffect, useState } from "react";
 interface EdgeEditorProps {
   edge: Edge;
-  onSave: (updatedEdge: Edge) => void;
-  onCancel: () => void;
+  onChange: (updatedEdge: Edge) => void;
 }
 
-function EdgeEditor({ edge, onSave, onCancel }: EdgeEditorProps) {
-  const [label, setLabel] = useState(edge.label || "");
+function EdgeEditor({ edge, onChange }: EdgeEditorProps) {
   const nodes = useNodes();
+  const [label, setLabel] = useState(edge.label || "");
   useEffect(() => {
     setLabel(edge.label || "");
   }, [edge]);
 
-  const handleSubmit: FormEventHandler = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleChange = (value: string) => {
     // create a new edge containing edge data + new label
     // also update the data text property as the new label
     const updatedEdge: Edge = {
       ...edge,
-      label,
-      data: { ...edge.data, text: label },
+      label: value,
+      data: { ...edge.data, text: value },
     };
     if (updatedEdge === edge) return;
-    onSave(updatedEdge);
+    setLabel(value);
+    onChange(updatedEdge);
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <>
       {/* Row tra gruppo field e gruppo pulsanti */}
       <Stack rowGap={1} direction={"column"} sx={{ minWidth: 100 }}>
         {/* Stack tra field */}
@@ -49,7 +46,7 @@ function EdgeEditor({ edge, onSave, onCancel }: EdgeEditorProps) {
               <Input
                 id="edge-label"
                 value={(label as string) || ""}
-                onChange={(e) => setLabel(e.target.value)}
+                onChange={(e) => handleChange(e.target.value)}
                 type="text"
                 color="secondary"
               />
@@ -57,35 +54,9 @@ function EdgeEditor({ edge, onSave, onCancel }: EdgeEditorProps) {
           ) : (
             <></>
           )}
-
-          {/* Stack tra i pulsanti */}
-          <Stack
-            paddingTop={1.2}
-            direction={"row"}
-            justifyContent={"flex-start"}
-            gap={1.2}
-          >
-            <Button
-              type="submit"
-              variant="gradient"
-              color="success"
-              style={{ transition: "background-color 0.2s" }}
-            >
-              <CheckIcon />
-            </Button>
-            <Button
-              type="button"
-              style={{ transition: "background-color 0.2s" }}
-              variant="outline"
-              color="error"
-              onClick={onCancel}
-            >
-              <CloseIcon />
-            </Button>
-          </Stack>
         </Stack>
       </Stack>
-    </form>
+    </>
   );
 }
 

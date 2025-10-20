@@ -169,7 +169,7 @@ export default function GraphEditor() {
 
   const onConnect = useCallback(
     (params: Edge | Connection) => {
-      const editedEdge = { ...params } as Edge;
+      const editedEdge = { ...params, label: "", data: {} } as Edge;
       const isNewEdge = !editedEdge.id;
       if (isNewEdge) editedEdge.id = `${uuidv4()}`;
 
@@ -215,6 +215,7 @@ export default function GraphEditor() {
   const handleSaveNode = (updatedNode: Record<string, any>) => {
     const node = updatedNode as Node;
     setFlowNodes((nds) => nds.map((n) => (n.id === node.id ? node : n)));
+    setEditingElement(node);
   };
 
   // Update edges list
@@ -222,6 +223,7 @@ export default function GraphEditor() {
     setEdges((eds) =>
       eds.map((e) => (e.id === updatedEdge.id ? updatedEdge : e))
     );
+    setEditingElement(updatedEdge);
   };
 
   const handleNodeClick: NodeMouseHandler<Node> = useCallback(
