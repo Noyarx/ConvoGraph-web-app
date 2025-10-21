@@ -1,7 +1,3 @@
-// src/components/Sidebar.tsx
-import { Button } from "@material-tailwind/react";
-import CheckIcon from "@mui/icons-material/Check";
-
 import {
   Box,
   Divider,
