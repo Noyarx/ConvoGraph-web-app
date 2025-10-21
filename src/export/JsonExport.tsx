@@ -4,7 +4,7 @@ export function exportTimelineToJSON(graphNodes: any[]) {
     info: {
       name: "",
       node_count: graphNodes.length,
-      last_modified: new Date(),
+      last_modified: new Date().toLocaleString(),
       made_with: "ConvoGraph © 2025",
     },
     nodes: graphNodes,

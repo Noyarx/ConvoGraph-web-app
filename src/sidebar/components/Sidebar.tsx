@@ -1,7 +1,7 @@
 // src/components/Sidebar.tsx
 import { Button } from "@material-tailwind/react";
 import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
+
 import {
   Box,
   Divider,
@@ -61,8 +61,17 @@ function Sidebar({
     setModified(false);
   };
 
-  function handleCancel(): void {
-    onClose();
+  // Simulates form submit whenever user unfocuses fields
+  function simulateSubmit() {
+    const submitter = document.createElement("button");
+    submitter.type = "submit";
+    submitter.style.display = "none";
+    const form: HTMLFormElement = document.querySelector(
+      "#node-edit-form"
+    ) as HTMLFormElement;
+    form.appendChild(submitter);
+    submitter.click();
+    form.removeChild(submitter);
   }
 
   function handleChange(value: any) {
@@ -189,34 +198,31 @@ function Sidebar({
         ) : (
           <></>
         )}
-        <form onSubmit={handleSubmit}>
+        <form
+          id="node-edit-form"
+          onBlur={simulateSubmit}
+          onSubmit={handleSubmit}
+        >
           {/* FORM MODULARE */}
           {renderContent()}
           {/* PULSANTI */}
           <Stack
-            paddingTop={1.2}
+            id="ciao"
+            paddingTop={2}
             direction={"row"}
-            justifyContent={"flex-start"}
+            justifyContent={"center"}
             gap={1.2}
           >
-            <Button
+            {/* <Button
               type="submit"
+              variant={"outline"}
               disabled={modified ? false : true}
-              variant={modified ? "outline" : "ghost"}
               color={modified ? "success" : "secondary"}
+              className="w-56"
               style={{ transition: "background-color 0.2s" }}
             >
               <CheckIcon />
-            </Button>
-            <Button
-              type="reset"
-              style={{ transition: "background-color 0.2s" }}
-              variant="outline"
-              color="error"
-              onClick={handleCancel}
-            >
-              <CloseIcon />
-            </Button>
+            </Button> */}
           </Stack>
         </form>
       </Box>

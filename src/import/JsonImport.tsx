@@ -38,7 +38,7 @@ export async function importTimelineFromJSON(): Promise<any | null> {
           info = {
             name: "",
             node_count: Array.isArray(nodes) ? nodes.length : 0,
-            last_modified: new Date().toISOString(),
+            last_modified: new Date().toLocaleString(),
             made_with: "ConvoGraph © 2025",
           };
         }

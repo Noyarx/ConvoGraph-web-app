@@ -43,6 +43,7 @@ function NodeEditor({ node, onChange }: NodeEditorProps) {
                     </span>
                   </label>
                   <Input
+                    color="info"
                     value={data.speaker || ""}
                     onChange={(e) => handleChange("speaker", e.target.value)}
                   />
@@ -54,6 +55,7 @@ function NodeEditor({ node, onChange }: NodeEditorProps) {
                     </span>
                   </label>
                   <Input
+                    color="info"
                     value={data.mood || ""}
                     onChange={(e) => handleChange("mood", e.target.value)}
                   />
@@ -66,6 +68,7 @@ function NodeEditor({ node, onChange }: NodeEditorProps) {
                   </span>
                 </label>
                 <Textarea
+                  color="info"
                   value={data.text || ""}
                   onChange={(e) => handleChange("text", e.target.value)}
                 />

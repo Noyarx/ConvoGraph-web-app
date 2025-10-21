@@ -15,6 +15,11 @@ function Header() {
   const graphNodes = flowToGraphTree(getNodes(), getEdges());
 
   const handleExport = () => {
+    if (getNodes().length < 1) {
+      console.log(getNodes().length);
+      alert("⚠️ There is no nodes to export!");
+      return;
+    }
     exportTimelineToJSON(graphNodes);
   };
 
