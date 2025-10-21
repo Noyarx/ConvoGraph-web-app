@@ -267,6 +267,7 @@ export default function GraphEditor() {
   return (
     <div style={{ width: "100%", height: "100vh" }}>
       <ReactFlow
+        onDragOver={() => {}}
         selectionMode={SelectionMode.Partial}
         connectionRadius={30}
         nodes={flowNodes}
