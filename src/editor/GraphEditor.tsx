@@ -36,7 +36,6 @@ import QuestionNodeComponent, {
 import StatementNodeComponent, {
   bgColor as statementBgColor,
 } from "../nodes/components/StatementNodeComponent";
-import { toXYFlowEdges, toXYFlowNodes } from "../nodes/utils/xyflowAdapter";
 import SideBar from "../sidebar/components/Sidebar";
 import FloatingToolbar from "../toolbar/components/FloatingToolbar";
 function createGraphNode(
@@ -134,8 +133,8 @@ const nodeTypes = {
 
 export default function GraphEditor() {
   const { screenToFlowPosition } = useReactFlow();
-  const initialNodes = toXYFlowNodes([]);
-  const initialEdges = toXYFlowEdges([]);
+  const initialNodes: Node[] = [];
+  const initialEdges: Edge[] = [];
 
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
@@ -213,9 +212,28 @@ export default function GraphEditor() {
   // );
 
   const handleSaveNode = (updatedNode: Record<string, any>) => {
-    const node = updatedNode as Node;
-    setFlowNodes((nds) => nds.map((n) => (n.id === node.id ? node : n)));
-    setEditingElement(node);
+    const syncedNode = {
+      ...(updatedNode as Node),
+      position:
+        flowNodes.find((n) => n.id === updatedNode.id)?.position ??
+        updatedNode.position,
+      data: {
+        ...updatedNode.data,
+        node_info: {
+          ...updatedNode.data.node_info,
+          position:
+            flowNodes.find((n) => n.id === updatedNode.id)?.position ??
+            updatedNode.data.node_info.position,
+        },
+      },
+    };
+
+    setFlowNodes((prev) =>
+      prev.map((n) => (n.id === updatedNode.id ? syncedNode : (n as Node)))
+    );
+
+    // Usa la versione sincronizzata per aggiornare la sidebar
+    setEditingElement(syncedNode);
   };
 
   // Update edges list
@@ -228,24 +246,7 @@ export default function GraphEditor() {
 
   const handleNodeClick: NodeMouseHandler<Node> = useCallback(
     (_e: React.MouseEvent<Element, MouseEvent>, node: Node) => {
-      // console.log(node);
-      switch (node.type) {
-        case "statement":
-          setEditingElement(node);
-          break;
-        case "question":
-          setEditingElement(node);
-          break;
-        case "condition":
-          setEditingElement(node);
-          break;
-        case "event":
-          setEditingElement(node);
-          break;
-        case "comment":
-          setEditingElement(node);
-          break;
-      }
+      setEditingElement(node);
       setSidebarOpen(true);
     },
     [flowNodes]
