@@ -168,7 +168,7 @@ export default function GraphEditor() {
 
   const onConnect = useCallback(
     (params: Edge | Connection) => {
-      const editedEdge = { ...params } as Edge;
+      const editedEdge = { ...params, label: "", data: {} } as Edge;
       const isNewEdge = !editedEdge.id;
       if (isNewEdge) editedEdge.id = `${uuidv4()}`;
 
@@ -241,6 +241,7 @@ export default function GraphEditor() {
     setEdges((eds) =>
       eds.map((e) => (e.id === updatedEdge.id ? updatedEdge : e))
     );
+    setEditingElement(updatedEdge);
   };
 
   const handleNodeClick: NodeMouseHandler<Node> = useCallback(
@@ -267,6 +268,7 @@ export default function GraphEditor() {
   return (
     <div style={{ width: "100%", height: "100vh" }}>
       <ReactFlow
+        onDragOver={() => {}}
         selectionMode={SelectionMode.Partial}
         connectionRadius={30}
         nodes={flowNodes}

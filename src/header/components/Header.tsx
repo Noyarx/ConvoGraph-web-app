@@ -15,6 +15,11 @@ function Header() {
   const graphNodes = flowToGraphTree(getNodes(), getEdges());
 
   const handleExport = () => {
+    if (getNodes().length < 1) {
+      console.log(getNodes().length);
+      alert("⚠️ There is no nodes to export!");
+      return;
+    }
     exportTimelineToJSON(graphNodes);
   };
 
@@ -31,14 +36,18 @@ function Header() {
 
   return (
     <div className="fixed top-0 left-0 !m-0 w-screen pointer-events-none">
-      <div className="bg-gradient-to-b from-slate-300 to-slate-50">
+      <div className="shadow-none border-b border-gray-50 p-1 bg-surface-light bg-opacity-60">
         <div className="flex flex-row gap-2 justify-between">
           {/* <img className="select-none" src={logo} width="64px" height="64px" /> */}
           <div className="flex flex-row gap-2 pr-2 items-center pointer-events-auto">
             <Button
+              style={{
+                transitionProperty: "background-color color",
+                transitionDuration: "0.2s",
+              }}
               className="flex flex-row p-2 gap-2 justify-between"
               type="button"
-              variant="gradient"
+              variant="solid"
               onClick={handleImport}
             >
               <p>
@@ -47,9 +56,13 @@ function Header() {
               <UploadFileRoundedIcon />
             </Button>
             <Button
+              style={{
+                transitionProperty: "background-color color",
+                transitionDuration: "0.2s",
+              }}
               className="flex flex-row p-2 gap-2 justify-between"
               type="button"
-              variant="gradient"
+              variant="solid"
               onClick={handleExport}
             >
               <p>

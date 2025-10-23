@@ -1,7 +1,13 @@
-// src/components/Sidebar.tsx
-import { Box, Divider, Drawer, IconButton, Typography } from "@mui/material";
-import type { Edge, Node } from "@xyflow/react";
-import { type ReactNode } from "react";
+import {
+  Box,
+  Divider,
+  Drawer,
+  IconButton,
+  Stack,
+  Typography,
+} from "@mui/material";
+import { type Edge, type Node } from "@xyflow/react";
+import { useEffect, useState, type ReactNode } from "react";
 import EdgeEditor from "./EdgeEditor";
 import NodeEditor from "./NodeEditor";
 
@@ -22,6 +28,52 @@ function Sidebar({
   onSaveNode,
   onSaveEdge,
 }: SidebarEditorProps) {
+  const [element, setElement] = useState<Node | Edge | null>(selectedElement);
+  const [modified, setModified] = useState(false);
+
+  // update sidebar on newly selected node
+  useEffect(() => {
+    if (selectedElement) {
+      setElement(selectedElement);
+      setModified(false);
+    }
+  }, [selectedElement]);
+
+  // set modified based on wether the changed element is equal to the one before the changes or not
+  useEffect(() => {
+    if (!selectedElement || !element) return;
+    setModified(JSON.stringify(selectedElement) !== JSON.stringify(element));
+  }, [selectedElement, element]);
+
+  // send the changed nodes to GraphEditor
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedElement || !modified) return;
+    if ("source" in selectedElement) {
+      onSaveEdge(element as Edge);
+    } else {
+      onSaveNode(element as Node);
+    }
+    setModified(false);
+  };
+
+  // Simulates form submit whenever user unfocuses fields
+  function simulateSubmit() {
+    const submitter = document.createElement("button");
+    submitter.type = "submit";
+    submitter.style.display = "none";
+    const form: HTMLFormElement = document.querySelector(
+      "#node-edit-form"
+    ) as HTMLFormElement;
+    form.appendChild(submitter);
+    submitter.click();
+    form.removeChild(submitter);
+  }
+
+  function handleChange(value: any) {
+    setElement(value);
+  }
+
   const renderContent = (): ReactNode => {
     if (!selectedElement)
       return (
@@ -32,24 +84,12 @@ function Sidebar({
 
     if ("source" in selectedElement) {
       // Se ha la proprietà source è un Edge
-      return (
-        <EdgeEditor
-          edge={selectedElement}
-          onCancel={onClose}
-          onSave={(updated) => {
-            onSaveEdge(updated);
-          }}
-        />
-      );
+      return <EdgeEditor edge={selectedElement} onChange={handleChange} />;
     } else {
       // Altrimenti è un Node
       return (
         <>
-          <NodeEditor
-            node={selectedElement}
-            onCancel={onClose}
-            onSave={(updated) => onSaveNode(updated as any as Node)}
-          />
+          <NodeEditor node={selectedElement} onChange={handleChange} />
         </>
       );
     }
@@ -136,7 +176,6 @@ function Sidebar({
         </Typography>
         <span />
       </Box>
-
       {/* CONTENUTO */}
       <Box
         sx={{
@@ -155,10 +194,34 @@ function Sidebar({
         ) : (
           <></>
         )}
-
-        {renderContent()}
+        <form
+          id="node-edit-form"
+          onBlur={simulateSubmit}
+          onSubmit={handleSubmit}
+        >
+          {/* FORM MODULARE */}
+          {renderContent()}
+          {/* PULSANTI */}
+          <Stack
+            id="ciao"
+            paddingTop={2}
+            direction={"row"}
+            justifyContent={"center"}
+            gap={1.2}
+          >
+            {/* <Button
+              type="submit"
+              variant={"outline"}
+              disabled={modified ? false : true}
+              color={modified ? "success" : "secondary"}
+              className="w-56"
+              style={{ transition: "background-color 0.2s" }}
+            >
+              <CheckIcon />
+            </Button> */}
+          </Stack>
+        </form>
       </Box>
-
       <Divider />
       <Box
         sx={{

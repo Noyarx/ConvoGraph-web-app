@@ -1,15 +1,12 @@
-import { Button, Input, Textarea, Typography } from "@material-tailwind/react";
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
+import { Input, Textarea, Typography } from "@material-tailwind/react";
 import { Stack } from "@mui/material";
-import { useEffect, useState, type FormEventHandler } from "react";
+import { useEffect, useState } from "react";
 interface NodeEditorProps {
   node: Record<string, any>;
-  onSave: (updatedNode: Record<string, any>) => void;
-  onCancel: () => void;
+  onChange: (updatedNode: Record<string, any>) => void;
 }
 
-function NodeEditor({ node, onSave, onCancel }: NodeEditorProps) {
+function NodeEditor({ node, onChange }: NodeEditorProps) {
   const graphNode = node.data;
   const [data, setData] = useState(graphNode.data);
 
@@ -18,26 +15,16 @@ function NodeEditor({ node, onSave, onCancel }: NodeEditorProps) {
     setData(graphNode.data);
   }, [node]);
 
-  const handleChange = (path: string, value: any) => {
-    let updated = {
-      ...data,
-    };
-    if (path.startsWith("node_info.")) {
-      const key = path.replace("node_info.", "");
-      updated.node_info = {
-        ...updated.node_info,
-        [key]: value,
-      };
-    } else {
-      updated[path] = value;
-    }
-    setData(updated);
-  };
-
-  const handleSubmit: FormEventHandler = (e: React.FormEvent) => {
-    e.preventDefault();
-    const updatedNode = { ...node, data: { ...graphNode, data } };
-    onSave(updatedNode);
+  const handleChange = (key: string, value: any) => {
+    const updatedData = { ...data, [key]: value };
+    setData(updatedData);
+    onChange({
+      ...node,
+      data: {
+        ...node.data,
+        data: updatedData,
+      },
+    });
   };
 
   // Choose what fields to render based on selected node type
@@ -56,6 +43,7 @@ function NodeEditor({ node, onSave, onCancel }: NodeEditorProps) {
                     </span>
                   </label>
                   <Input
+                    color="info"
                     value={data.speaker || ""}
                     onChange={(e) => handleChange("speaker", e.target.value)}
                   />
@@ -67,6 +55,7 @@ function NodeEditor({ node, onSave, onCancel }: NodeEditorProps) {
                     </span>
                   </label>
                   <Input
+                    color="info"
                     value={data.mood || ""}
                     onChange={(e) => handleChange("mood", e.target.value)}
                   />
@@ -79,6 +68,7 @@ function NodeEditor({ node, onSave, onCancel }: NodeEditorProps) {
                   </span>
                 </label>
                 <Textarea
+                  color="info"
                   value={data.text || ""}
                   onChange={(e) => handleChange("text", e.target.value)}
                 />
@@ -122,35 +112,7 @@ function NodeEditor({ node, onSave, onCancel }: NodeEditorProps) {
     }
   };
 
-  return (
-    <form onSubmit={handleSubmit}>
-      {renderNodeFields()}
-      <Stack
-        paddingTop={1.2}
-        direction={"row"}
-        justifyContent={"flex-start"}
-        gap={1.2}
-      >
-        <Button
-          type="submit"
-          variant="gradient"
-          color="success"
-          style={{ transition: "background-color 0.2s" }}
-        >
-          <CheckIcon />
-        </Button>
-        <Button
-          type="button"
-          style={{ transition: "background-color 0.2s" }}
-          variant="outline"
-          color="error"
-          onClick={onCancel}
-        >
-          <CloseIcon />
-        </Button>
-      </Stack>
-    </form>
-  );
+  return <>{renderNodeFields()}</>;
 }
 
 export default NodeEditor;
