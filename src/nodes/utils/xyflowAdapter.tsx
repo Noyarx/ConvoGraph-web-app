@@ -86,7 +86,7 @@ export function flowToGraphNodes(nodes: Node[]): GraphNode[] {
 
 // Function to remap ReactFlow nodes and edges into GraphNodes
 export function flowToGraphTree(nodes: Node[], edges: Edge[]): GraphNode[] {
-  let graphNodes: GraphNode[] = nodes.map((e) => e.data as any as GraphNode);
+  let graphNodes: GraphNode[] = flowToGraphNodes(nodes);
 
   // Reset next_node value for every type of GraphNode
   graphNodes = graphNodes.map((e) => {
@@ -123,9 +123,9 @@ export function flowToGraphTree(nodes: Node[], edges: Edge[]): GraphNode[] {
         break;
       case "condition":
         if (el.sourceHandle === "left") {
-          sourceNode.next_node_true = el.target;
-        } else if (el.sourceHandle === "right") {
           sourceNode.next_node_false = el.target;
+        } else if (el.sourceHandle === "right") {
+          sourceNode.next_node_true = el.target;
         }
         break;
       case "question":
