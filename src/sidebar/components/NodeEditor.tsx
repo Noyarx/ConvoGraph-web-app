@@ -1,19 +1,50 @@
 import { Input, Textarea, Typography } from "@material-tailwind/react";
 import { Stack } from "@mui/material";
 import { useEffect, useState } from "react";
+import {
+  useCharacterData,
+  type CharacterDataContextType,
+} from "../selectItems/CharacterDataContext";
+import { type SelectItem } from "../selectItems/SelectItems";
+import AddableSelect from "../selectItems/components/AddableSelect";
 interface NodeEditorProps {
   node: Record<string, any>;
   onChange: (updatedNode: Record<string, any>) => void;
 }
 
+interface AddableSelectProps {
+  value: string;
+  items: SelectItem[];
+  onChange: (val: string) => void;
+  onAdd: (label: string) => void;
+  placeholder?: string;
+}
+
 function NodeEditor({ node, onChange }: NodeEditorProps) {
   const graphNode = node.data;
   const [data, setData] = useState(graphNode.data);
+  const context = useCharacterData();
+
+  function renderSelectField(props: AddableSelectProps) {
+    if (!context) return null;
+    return (
+      <AddableSelect
+        value={props.value}
+        onChange={props.onChange}
+        onAdd={props.onAdd}
+        items={props.items}
+        placeholder={props.placeholder}
+      />
+    );
+  }
+
+  const { speakers, moods, addSpeaker, addMood } =
+    context as CharacterDataContextType;
 
   // update editor field values on node selected change
   useEffect(() => {
     setData(graphNode.data);
-  }, [node]);
+  }, [node.id]);
 
   const handleChange = (key: string, value: any) => {
     const updatedData = { ...data, [key]: value };
@@ -21,7 +52,11 @@ function NodeEditor({ node, onChange }: NodeEditorProps) {
     onChange({
       ...node,
       data: {
-        ...node.data,
+        ...graphNode,
+        node_info: {
+          ...graphNode.node_info,
+          position: node.position,
+        },
         data: updatedData,
       },
     });
@@ -35,30 +70,35 @@ function NodeEditor({ node, onChange }: NodeEditorProps) {
         return (
           <>
             <Stack rowGap={2}>
-              <Stack direction={"row"} columnGap={2}>
+              <Stack direction={"row"} columnGap={1}>
                 <Stack rowGap={0.5}>
-                  <label htmlFor="speaker-label">
+                  <label htmlFor="speaker">
                     <span className="">
                       <strong>Speaker:</strong>
                     </span>
                   </label>
-                  <Input
-                    color="info"
-                    value={data.speaker || ""}
-                    onChange={(e) => handleChange("speaker", e.target.value)}
-                  />
+                  {renderSelectField({
+                    value: data.speaker || "",
+                    items: speakers,
+                    onChange: (val) => handleChange("speaker", val),
+                    onAdd: addSpeaker,
+                    placeholder: "Speaker",
+                  } as AddableSelectProps)}
                 </Stack>
+
                 <Stack rowGap={0.5}>
-                  <label htmlFor="mood-label">
+                  <label htmlFor="mood">
                     <span className="">
                       <strong>Mood:</strong>
                     </span>
                   </label>
-                  <Input
-                    color="info"
-                    value={data.mood || ""}
-                    onChange={(e) => handleChange("mood", e.target.value)}
-                  />
+                  {renderSelectField({
+                    value: data.mood || "",
+                    onChange: (val) => handleChange("mood", val),
+                    items: moods,
+                    onAdd: addMood,
+                    placeholder: "Mood",
+                  } as AddableSelectProps)}
                 </Stack>
               </Stack>
               <Stack rowGap={0.5}>

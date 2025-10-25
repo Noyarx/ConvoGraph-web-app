@@ -56,7 +56,7 @@ function createGraphNode(
         },
         data: {
           speaker: "Matthew",
-          mood: "Happy",
+          mood: "happy",
           text: "Ciao, sono Matthew. In realtà sono solo un nuovo nodo blu.",
         },
       };
@@ -71,7 +71,7 @@ function createGraphNode(
         },
         data: {
           speaker: "Matthew",
-          mood: "Happy",
+          mood: "happy",
           text: "Ciao, sono Matthew. In realtà sono solo un nuovo nodo blu.",
         },
         choices: [],
