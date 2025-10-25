@@ -1,16 +1,45 @@
 import { Input, Textarea, Typography } from "@material-tailwind/react";
-import { MenuItem, Select, Stack } from "@mui/material";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { moods, speakers } from "../selectItems/itemLists";
+import { Stack } from "@mui/material";
+import { useEffect, useState } from "react";
+import {
+  useCharacterData,
+  type CharacterDataContextType,
+} from "../selectItems/CharacterDataContext";
+import { type SelectItem } from "../selectItems/SelectItems";
+import AddableSelect from "../selectItems/components/AddableSelect";
 interface NodeEditorProps {
   node: Record<string, any>;
   onChange: (updatedNode: Record<string, any>) => void;
 }
-const itemClass = "!mx-1.5 !my-1 !rounded";
-const itemHoverClass = "hover:!bg-slate-200";
+
+interface AddableSelectProps {
+  value: string;
+  items: SelectItem[];
+  onChange: (val: string) => void;
+  onAdd: (label: string) => void;
+  placeholder?: string;
+}
+
 function NodeEditor({ node, onChange }: NodeEditorProps) {
   const graphNode = node.data;
   const [data, setData] = useState(graphNode.data);
+  const context = useCharacterData();
+
+  function renderSelectField(props: AddableSelectProps) {
+    if (!context) return null;
+    return (
+      <AddableSelect
+        value={props.value}
+        onChange={props.onChange}
+        onAdd={props.onAdd}
+        items={props.items}
+        placeholder={props.placeholder}
+      />
+    );
+  }
+
+  const { speakers, moods, addSpeaker, addMood } =
+    context as CharacterDataContextType;
 
   // update editor field values on node selected change
   useEffect(() => {
@@ -33,22 +62,6 @@ function NodeEditor({ node, onChange }: NodeEditorProps) {
     });
   };
 
-  const speakerItems = useMemo((): ReactNode[] => {
-    return speakers.map((e) => (
-      <MenuItem className={`${itemClass} ${itemHoverClass}`} value={e.value}>
-        {e.label}
-      </MenuItem>
-    ));
-  }, [speakers]);
-
-  const moodItems = useMemo((): ReactNode[] => {
-    return moods.map((e) => (
-      <MenuItem className={`${itemClass} ${itemHoverClass}`} value={e.value}>
-        {e.label}
-      </MenuItem>
-    ));
-  }, [moods]);
-
   // Choose what fields to render based on selected node type
   const renderNodeFields = () => {
     switch (node.type) {
@@ -57,51 +70,35 @@ function NodeEditor({ node, onChange }: NodeEditorProps) {
         return (
           <>
             <Stack rowGap={2}>
-              <Stack direction={"row"} columnGap={4}>
+              <Stack direction={"row"} columnGap={1}>
                 <Stack rowGap={0.5}>
                   <label htmlFor="speaker">
                     <span className="">
                       <strong>Speaker:</strong>
                     </span>
                   </label>
-
-                  <Select
-                    className="h-10 w-32 border rounded-md"
-                    value={data.speaker || ""}
-                    renderValue={(selected) => {
-                      if (selected.length === 0) {
-                        return <em>Speaker</em>;
-                      }
-
-                      return speakers.find((e) => e.value === selected)?.label;
-                    }}
-                    onChange={(e: any) =>
-                      handleChange("speaker", e.target.value)
-                    }
-                  >
-                    {speakerItems}
-                  </Select>
+                  {renderSelectField({
+                    value: data.speaker || "",
+                    items: speakers,
+                    onChange: (val) => handleChange("speaker", val),
+                    onAdd: addSpeaker,
+                    placeholder: "Speaker",
+                  } as AddableSelectProps)}
                 </Stack>
+
                 <Stack rowGap={0.5}>
                   <label htmlFor="mood">
                     <span className="">
                       <strong>Mood:</strong>
                     </span>
                   </label>
-                  <Select
-                    className="h-10 w-32 border rounded-md"
-                    value={data.mood || ""}
-                    renderValue={(selected) => {
-                      if (selected.length === 0) {
-                        return <em>Mood</em>;
-                      }
-
-                      return moods.find((e) => e.value === selected)?.label;
-                    }}
-                    onChange={(e: any) => handleChange("mood", e.target.value)}
-                  >
-                    {moodItems}
-                  </Select>
+                  {renderSelectField({
+                    value: data.mood || "",
+                    onChange: (val) => handleChange("mood", val),
+                    items: moods,
+                    onAdd: addMood,
+                    placeholder: "Mood",
+                  } as AddableSelectProps)}
                 </Stack>
               </Stack>
               <Stack rowGap={0.5}>

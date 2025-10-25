@@ -10,6 +10,7 @@ import { type Edge, type Node } from "@xyflow/react";
 import { useEffect, useState, type ReactNode } from "react";
 import EdgeEditor from "./EdgeEditor";
 import NodeEditor from "./NodeEditor";
+import { CharacterDataProvider } from "../selectItems/CharacterDataContext";
 
 // (in futuro aggiungeremo anche NodeEditor ecc.)
 
@@ -81,16 +82,15 @@ function Sidebar({
           Seleziona un nodo o un collegamento per modificarne le proprietà.
         </Typography>
       );
-
     if ("source" in selectedElement) {
       // Se ha la proprietà source è un Edge
       return <EdgeEditor edge={selectedElement} onChange={handleChange} />;
     } else {
       // Altrimenti è un Node
       return (
-        <>
+        <CharacterDataProvider>
           <NodeEditor node={selectedElement} onChange={handleChange} />
-        </>
+        </CharacterDataProvider>
       );
     }
   };
