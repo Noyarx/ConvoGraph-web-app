@@ -76,23 +76,21 @@ function Sidebar({
   }
 
   const renderContent = (): ReactNode => {
-    if (!selectedElement)
-      return (
-        <Typography color="text.secondary" fontSize={20}>
-          Seleziona un nodo o un collegamento per modificarne le proprietà.
-        </Typography>
-      );
-    if ("source" in selectedElement) {
-      // Se ha la proprietà source è un Edge
-      return <EdgeEditor edge={selectedElement} onChange={handleChange} />;
-    } else {
-      // Altrimenti è un Node
-      return (
+    return (
+      <>
         <CharacterDataProvider>
-          <NodeEditor node={selectedElement} onChange={handleChange} />
+          {!selectedElement ? (
+            <Typography color="text.secondary" fontSize={20}>
+              Seleziona un nodo o un collegamento per modificarne le proprietà.
+            </Typography>
+          ) : "source" in selectedElement ? (
+            <EdgeEditor edge={selectedElement} onChange={handleChange} />
+          ) : (
+            <NodeEditor node={selectedElement} onChange={handleChange} />
+          )}
         </CharacterDataProvider>
-      );
-    }
+      </>
+    );
   };
 
   const getTitle = () => {
