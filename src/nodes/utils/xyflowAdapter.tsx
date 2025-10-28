@@ -74,9 +74,15 @@ export function toXYFlowEdges(nodes: GraphNode[]): Edge[] {
 //#region ReactFlow-GraphNode
 
 export function flowToGraphNode(node: Node): GraphNode {
-  let graphNode: GraphNode = node.data as any as GraphNode;
-  graphNode.id = node.id;
-  graphNode.node_info.position = node.position;
+  const graphNode: GraphNode = {
+    ...node.data,
+    id: node.id,
+    node_info: {
+      ...(node.data.node_info as Record<string, any>),
+      position: node.position,
+    },
+    data: node.data.data,
+  } as GraphNode;
   return graphNode;
 }
 

@@ -12,11 +12,10 @@ import {
 
 function Header() {
   const { getNodes, getEdges, setNodes, setEdges } = useReactFlow();
-  const graphNodes = flowToGraphTree(getNodes(), getEdges());
 
   const handleExport = () => {
+    const graphNodes = flowToGraphTree(getNodes(), getEdges());
     if (getNodes().length < 1) {
-      console.log(getNodes().length);
       alert("⚠️ There is no nodes to export!");
       return;
     }
