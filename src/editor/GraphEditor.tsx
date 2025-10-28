@@ -18,6 +18,7 @@ import { useCallback, useState } from "react";
 
 import React from "react";
 import { v4 as uuidv4 } from "uuid";
+import ContextMenu from "../context-menu/components/ContextMenu";
 import Header from "../header/components/Header";
 import type { DialogueChoice } from "../models/DialogueChoice.model";
 import type { GraphNode } from "../models/NodeTypes.model";
@@ -144,6 +145,13 @@ export default function GraphEditor() {
   );
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
+  const [contextMenu, setContextMenu] = useState({
+    open: false,
+    x: 0,
+    y: 0,
+    type: null as "node" | "edge" | "pane" | null,
+    target: null as Node | Edge | null,
+  });
   // handler to create and add a new node
   const handleAddNode = useCallback(
     (
@@ -200,17 +208,6 @@ export default function GraphEditor() {
     [setEdges, flowNodes]
   );
 
-  // handler to delete a node and its edges
-  // const handleDeleteNode = useCallback(
-  //   (deletedId: string) => {
-  //     setFlowNodes((nodes) => nodes.filter((n) => n.id !== deletedId));
-  //     setEdges((edges) =>
-  //       edges.filter((e) => e.source !== deletedId && e.target !== deletedId)
-  //     );
-  //   },
-  //   [setFlowNodes, setEdges]
-  // );
-
   const handleSaveNode = (updatedNode: Record<string, any>) => {
     const syncedNode = {
       ...(updatedNode as Node),
@@ -260,17 +257,59 @@ export default function GraphEditor() {
     },
     [edges]
   );
+  const handleNodeContextMenu = useCallback(
+    (evt: React.MouseEvent<Element, MouseEvent>, node: Node) => {
+      evt.preventDefault();
+      setContextMenu({
+        open: true,
+        x: evt.clientX,
+        y: evt.clientY,
+        target: node,
+        type: "node",
+      });
+    },
+    [flowNodes]
+  );
+  const handleEdgeContextMenu = useCallback(
+    (evt: React.MouseEvent<Element, MouseEvent>, edge: Edge) => {
+      evt.preventDefault();
+      setContextMenu({
+        open: true,
+        x: evt.clientX,
+        y: evt.clientY,
+        target: edge,
+        type: "edge",
+      });
+    },
+    [edges]
+  );
+  const handlePaneContextMenu = useCallback(
+    (evt: MouseEvent | React.MouseEvent<Element, MouseEvent>) => {
+      evt.preventDefault();
+      setContextMenu({
+        open: true,
+        x: evt.clientX,
+        y: evt.clientY,
+        target: null,
+        type: "pane",
+      });
+    },
+    []
+  );
+
   const handleSidebarClose = () => {
     setEditingElement(null);
     setSidebarOpen(false);
   };
+
+  const handleClose = () => setContextMenu((m) => ({ ...m, open: false }));
 
   return (
     <div style={{ width: "100%", height: "100vh" }}>
       <ReactFlow
         onDragOver={() => {}}
         selectionMode={SelectionMode.Partial}
-        connectionRadius={30}
+        connectionRadius={40}
         nodes={flowNodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -278,6 +317,9 @@ export default function GraphEditor() {
         onConnect={onConnect}
         onNodeClick={handleNodeClick}
         onEdgeClick={handleEdgeClick}
+        onNodeContextMenu={handleNodeContextMenu}
+        onEdgeContextMenu={handleEdgeContextMenu}
+        onPaneContextMenu={handlePaneContextMenu}
         nodeTypes={nodeTypes}
         fitView
         minZoom={0.2}
@@ -304,13 +346,25 @@ export default function GraphEditor() {
           <FloatingToolbar onAddNode={handleAddNode} />
         </Controls>
       </ReactFlow>
+      <ContextMenu
+        open={contextMenu.open}
+        onClose={handleClose}
+        onEditElement={(element) => {
+          setEditingElement(element);
+          setSidebarOpen(true);
+        }}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        targetType={contextMenu.type}
+        target={contextMenu.target}
+      />
       <SideBar
         selectedElement={editingElement}
         open={sidebarOpen}
         onClose={handleSidebarClose}
         onSaveNode={handleSaveNode}
         onSaveEdge={handleSaveEdge}
-      ></SideBar>
+      />
     </div>
   );
 }
