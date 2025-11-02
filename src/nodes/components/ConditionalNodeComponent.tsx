@@ -1,4 +1,5 @@
 import { Handle, Position, type Node } from "@xyflow/react";
+import Chip from "@mui/material/Chip";
 import type { ConditionalNode } from "../../models/NodeTypes.model";
 
 export const bgColor = "#fc7bdbff";
@@ -12,11 +13,21 @@ function ConditionalNodeComponent(flowNode: Pick<Node, "data">) {
         backgroundColor: node.node_info.color || bgColor,
       }}
     >
-      <div className="flex flex-row gap-4 justify-between">
+      <div>
         <span>
-          <strong>Check</strong>:
+          <strong>Check if</strong>
         </span>
-        <span>{node.data.condition}</span>
+      </div>
+      <div className="flex flex-row py-1 gap-4 items-center">
+        <Chip className="!text-white" label={node.data.var_name} />
+        <span>
+          <strong>{node.data.operator}</strong>
+        </span>
+
+        <Chip
+          color={node.data.value === "true" ? "success" : "error"}
+          label={node.data.value}
+        />
       </div>
 
       <Handle
