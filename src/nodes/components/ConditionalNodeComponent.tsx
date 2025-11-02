@@ -18,16 +18,29 @@ function ConditionalNodeComponent(flowNode: Pick<Node, "data">) {
           <strong>Check if</strong>
         </span>
       </div>
-      <div className="flex flex-row py-1 gap-4 items-center">
+      <div className="flex flex-row p-1 gap-3 rounded-full items-center bg-black bg-opacity-10">
         <Chip className="!text-white" label={node.data.var_name} />
         <span>
           <strong>{node.data.operator}</strong>
         </span>
-
-        <Chip
-          color={node.data.value === "true" ? "success" : "error"}
-          label={node.data.value}
-        />
+        {node.data.operator === "is" ? (
+          <Chip
+            color={node.data.value === "true" ? "success" : "error"}
+            label={node.data.value}
+          />
+        ) : node.data.operator === "==" ? (
+          <Chip
+            color={"info"}
+            className="!text-white"
+            label={node.data.value}
+          />
+        ) : (
+          <Chip
+            color={"secondary"}
+            className="!text-white"
+            label={node.data.value}
+          />
+        )}
       </div>
 
       <Handle

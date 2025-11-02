@@ -3,6 +3,33 @@ export interface SelectItem {
   value: string;
 }
 
+export const operators: SelectItem[] = [
+  {
+    label: "<",
+    value: "<",
+  },
+  {
+    label: "<=",
+    value: "<=",
+  },
+  {
+    label: ">",
+    value: ">",
+  },
+  {
+    label: ">=",
+    value: ">=",
+  },
+  {
+    label: "==",
+    value: "==",
+  },
+  {
+    label: "is",
+    value: "is",
+  },
+];
+
 export const initialSpeakers: SelectItem[] = [
   {
     label: "Matthew",

@@ -1,12 +1,13 @@
 import { Input, Textarea, Typography } from "@material-tailwind/react";
-import { Stack } from "@mui/material";
+import { MenuItem, Select, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
 import {
   useCharacterData,
   type CharacterDataContextType,
 } from "../selectItems/CharacterDataContext";
-import { type SelectItem } from "../selectItems/SelectItems";
+import { operators, type SelectItem } from "../selectItems/SelectItems";
 import AddableSelect from "../selectItems/components/AddableSelect";
+
 interface NodeEditorProps {
   node: Record<string, any>;
   onChange: (updatedNode: Record<string, any>) => void;
@@ -19,6 +20,9 @@ interface AddableSelectProps {
   onAdd: (label: string) => void;
   placeholder?: string;
 }
+
+const itemClass = "!mx-1.5 !my-1 !rounded";
+const itemHoverClass = "hover:!bg-slate-200";
 
 function NodeEditor({ node, onChange }: NodeEditorProps) {
   const graphNode = node.data;
@@ -102,12 +106,13 @@ function NodeEditor({ node, onChange }: NodeEditorProps) {
                 </Stack>
               </Stack>
               <Stack rowGap={0.5}>
-                <label htmlFor="text-label">
+                <label htmlFor="textarea">
                   <span className="">
                     <strong>Text:</strong>
                   </span>
                 </label>
                 <Textarea
+                  key={"textarea"}
                   color="info"
                   value={data.text || ""}
                   onChange={(e) => handleChange("text", e.target.value)}
@@ -118,12 +123,132 @@ function NodeEditor({ node, onChange }: NodeEditorProps) {
         );
       case "condition":
         return (
-          <>
-            <Input
-              value={data.condition || ""}
-              onChange={(e) => handleChange("condition", e.target.value)}
-            />
-          </>
+          <Stack direction={"column"} rowGap={2} maxWidth={270}>
+            <Stack direction={"column"} rowGap={0.5}>
+              <label htmlFor="varname">
+                <span className="">
+                  <strong>Variable name:</strong>
+                </span>
+              </label>
+              <Input
+                id={"varname"}
+                key={"varname"}
+                color={"info"}
+                value={data.var_name || ""}
+                onChange={(e) => handleChange("var_name", e.target.value)}
+              />
+            </Stack>
+
+            <Stack direction={"row"} columnGap={4.5}>
+              <Stack direction={"column"} maxWidth={100} rowGap={0.5}>
+                <label htmlFor="operator">
+                  <span className="">
+                    <strong>operator:</strong>
+                  </span>
+                </label>
+                <Select
+                  id={"operator"}
+                  key={"operator"}
+                  value={data.operator || ""}
+                  renderValue={(selected) => {
+                    if (!selected) return <em>operator</em>;
+                    return selected;
+                  }}
+                  onChange={(e) => handleChange("operator", e.target.value)}
+                  sx={{
+                    maxHeight: 36,
+                    minWidth: 40,
+                    maxWidth: 70,
+                    textAlign: "center",
+                    padding: 0,
+                  }}
+                  className="!border-none !outline-none hover:!ring-2 hover:!ring-blue-200 "
+                >
+                  {operators.map((item: any) => (
+                    <MenuItem
+                      className={`${itemClass} ${itemHoverClass}`}
+                      key={item.value}
+                      value={item.value}
+                    >
+                      {item.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </Stack>
+              <Stack direction={"column"} maxWidth={180} rowGap={0.5}>
+                {/* render different field based on operator type */}
+                {data.operator === "is" ? (
+                  <>
+                    <label htmlFor="conditionalvalue">
+                      <strong>value:</strong>
+                    </label>
+                    <Select
+                      id={"value"}
+                      key={"value"}
+                      value={data.value || "null"}
+                      renderValue={(selected) => {
+                        if (selected !== "true" && selected !== "false")
+                          return <em className="text-gray-400">boolean</em>;
+                        return selected;
+                      }}
+                      onChange={(e) => handleChange("value", e.target.value)}
+                      sx={{
+                        maxHeight: 36,
+                        minWidth: 40,
+                        maxWidth: 120,
+                        padding: 0,
+                      }}
+                      className="!border-none !outline-none hover:!ring-2 hover:!ring-blue-200 "
+                    >
+                      <MenuItem
+                        className={`${itemClass} ${itemHoverClass}`}
+                        key={"true"}
+                        value={"true"}
+                      >
+                        true
+                      </MenuItem>
+                      <MenuItem
+                        className={`${itemClass} ${itemHoverClass}`}
+                        key={"false"}
+                        value={"false"}
+                      >
+                        false
+                      </MenuItem>
+                    </Select>
+                  </>
+                ) : data.operator === "==" ? (
+                  <>
+                    <label htmlFor="conditionalvalue">
+                      <strong>value:</strong>
+                    </label>
+                    <Input
+                      id={"value"}
+                      key={"value"}
+                      color={"info"}
+                      value={data.value || ""}
+                      placeholder="Enter string"
+                      onChange={(e) => handleChange("value", e.target.value)}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <label htmlFor="conditionalvalue">
+                      <strong>value:</strong>
+                    </label>
+                    <Input
+                      type={"number"}
+                      id={"value"}
+                      key={"value"}
+                      color={"info"}
+                      value={data.value || ""}
+                      placeholder="0"
+                      onChange={(e) => handleChange("value", e.target.value)}
+                    />
+                  </>
+                )}
+              </Stack>
+            </Stack>
+          </Stack>
         );
       case "event":
         return (
