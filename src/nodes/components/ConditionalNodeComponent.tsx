@@ -18,35 +18,44 @@ function ConditionalNodeComponent(flowNode: Pick<Node, "data">) {
           <strong>Check if</strong>
         </span>
       </div>
-      <div className="flex flex-row p-1 gap-3 rounded-full items-center bg-black bg-opacity-10">
-        <Chip className="!text-white" label={node.data.var_name} />
+      <div className="flex flex-row p-1 gap-3 max-w-full rounded-full items-center bg-black bg-opacity-10">
+        <Chip
+          className="!max-w-[152px] !text-white overflow-ellipsis"
+          label={node.data.var_name}
+        />
         <span>
           <strong>{node.data.operator}</strong>
         </span>
-        {node.data.operator === "is" ? (
-          <Chip
-            color={
-              node.data.value === "true"
-                ? "success"
-                : node.data.value === "false"
-                ? "error"
-                : "default"
-            }
-            label={node.data.value}
-          />
-        ) : node.data.operator === "==" ? (
-          <Chip
-            color={"info"}
-            className="!text-white"
-            label={node.data.value}
-          />
-        ) : (
-          <Chip
-            color={"secondary"}
-            className="!text-white"
-            label={node.data.value}
-          />
-        )}
+        <div className="!max-w-[92px] !overflow-clip">
+          {node.data.operator === "is" ? (
+            <Chip
+              color={
+                node.data.value === "true"
+                  ? "success"
+                  : node.data.value === "false"
+                  ? "error"
+                  : "default"
+              }
+              label={node.data.value}
+            />
+          ) : node.data.operator === "==" ? (
+            <Chip
+              color={"info"}
+              className="!text-white"
+              label={node.data.value}
+            />
+          ) : (
+            <Chip
+              color={
+                Number(node.data.value) - Number(node.data.value) === 0
+                  ? "secondary"
+                  : "default"
+              }
+              className="!text-white"
+              label={node.data.value}
+            />
+          )}
+        </div>
       </div>
 
       <Handle
