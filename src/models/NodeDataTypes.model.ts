@@ -1,3 +1,4 @@
+import type { ConditionalOperator } from "./ConditionalOperator.model";
 import type { TextModifier } from "./TextModifiers.model";
 
 // This is an abstract node data type, it is only created to be used as template type for a BaseNode.
@@ -16,7 +17,9 @@ export interface DialogueNodeData {
 }
 
 export interface ConditionalNodeData {
-  condition: string;
+  var_name: string;
+  operator: ConditionalOperator;
+  value: any;
 }
 
 export interface EventNodeData {

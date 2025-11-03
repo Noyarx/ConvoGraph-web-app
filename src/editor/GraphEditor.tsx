@@ -89,7 +89,9 @@ function createGraphNode(
           color: conditionBgColor,
         },
         data: {
-          condition: "unaCondizione",
+          var_name: "weaponsFound",
+          operator: ">=",
+          value: 2,
         },
       };
     case "event":
