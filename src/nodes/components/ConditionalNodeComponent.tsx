@@ -25,7 +25,13 @@ function ConditionalNodeComponent(flowNode: Pick<Node, "data">) {
         </span>
         {node.data.operator === "is" ? (
           <Chip
-            color={node.data.value === "true" ? "success" : "error"}
+            color={
+              node.data.value === "true"
+                ? "success"
+                : node.data.value === "false"
+                ? "error"
+                : "default"
+            }
             label={node.data.value}
           />
         ) : node.data.operator === "==" ? (
