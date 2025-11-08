@@ -119,6 +119,9 @@ export function flowToGraphTree(nodes: Node[], edges: Edge[]): GraphNode[] {
     For each edge set find the corresponding source node in the graphMap,
     then set that node's 'next_node' value(s) to the edge's target value.
   */
+  // Create map  {nodeId : [usedIndexes]}
+  const usedIndexesBySource = new Map<string, Set<number>>();
+
   edges.forEach((el) => {
     const sourceNode = graphMap[el.source];
 
@@ -135,14 +138,44 @@ export function flowToGraphTree(nodes: Node[], edges: Edge[]): GraphNode[] {
         }
         break;
       case "question":
+        // Retrieve from the map the indexes used by this node's edges
+        let usedIndexes = usedIndexesBySource.get(sourceNode.id);
+        if (!usedIndexes) {
+          // Find and store all indexes used by edges coming from the same source node
+          usedIndexes = new Set<number>();
+          usedIndexesBySource.set(el.source, usedIndexes);
+        }
+        // If index is not set, assign the smallest free index
+        // otherwise set it as the one manually set
+        let index: number;
+        const newIndex = el?.data?.index;
+        if (Number.isFinite(newIndex) && !usedIndexes.has(newIndex as number)) {
+          index = newIndex as number;
+        } else {
+          index = 0;
+          while (usedIndexes.has(index)) index++;
+        }
+        // Save index as used
+        usedIndexes.add(index);
+
         const choice: DialogueChoice = {
           next_node: el.target,
           text: el.label ? el.label + "" : "",
-          text_modifier: (el?.data?.text_modifier as TextModifier[]) || [], // TODO in edit modal user can set text modifiers in edge data
-          index: (el?.data?.index as number) ?? sourceNode.choices.length, // TODO in edit modal user can set choice index (order) in edge data
+          text_modifier: (el?.data?.text_modifier as TextModifier[]) || [],
+          index,
         };
         sourceNode.choices.push(choice);
         break;
+    }
+  });
+  // Compact choice indexes by shifting them down if there are "holes" between them
+  Object.values(graphMap).forEach((node) => {
+    if (node.type === "question" && node.choices?.length) {
+      node.choices
+        .sort((a, b) => a.index - b.index)
+        .forEach((choice, i) => {
+          choice.index = i;
+        });
     }
   });
   return graphNodes;

@@ -182,24 +182,6 @@ export default function GraphEditor() {
       const isNewEdge = !editedEdge.id;
       if (isNewEdge) editedEdge.id = `${uuidv4()}`;
 
-      // find the node this edge is coming from
-      const sourceNode: Node = flowNodes.find(
-        (n) => n.id === params.source
-      ) as Node;
-
-      if (sourceNode?.type === "question") {
-        // add a empty choice to question node choices list
-        const choices = sourceNode.data.choices as DialogueChoice[];
-        choices.push({} as DialogueChoice);
-        // populate new choices with this edge data
-        const choice = {
-          index: choices.length - 1,
-          text: editedEdge.label,
-          next_node: editedEdge.target,
-        } as DialogueChoice;
-        // set this edge's data as the choice it's representing
-        editedEdge.data = choice as Record<string, any>;
-      }
       // update edges list with new edge
       setEdges((eds) => addEdge(editedEdge, eds));
 
@@ -253,7 +235,6 @@ export default function GraphEditor() {
 
   const handleEdgeClick: EdgeMouseHandler<Edge> = useCallback(
     (_e: React.MouseEvent<Element, MouseEvent>, edge: Edge) => {
-      // console.log(edge);
       setEditingElement(edge);
       setSidebarOpen(true);
     },
