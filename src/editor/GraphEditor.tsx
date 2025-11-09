@@ -20,7 +20,6 @@ import React from "react";
 import { v4 as uuidv4 } from "uuid";
 import ContextMenu from "../context-menu/components/ContextMenu";
 import Header from "../header/components/Header";
-import type { DialogueChoice } from "../models/DialogueChoice.model";
 import type { GraphNode } from "../models/NodeTypes.model";
 import CommentNodeComponent, {
   bgColor as commentBgColor,
