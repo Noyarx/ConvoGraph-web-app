@@ -10,17 +10,31 @@ interface EdgeEditorProps {
 function EdgeEditor({ edge, onChange }: EdgeEditorProps) {
   const nodes = useNodes();
   const [label, setLabel] = useState(edge.label || "");
+  const [data, setData] = useState<Record<string, any> | null>(
+    edge.data || null
+  );
+
   useEffect(() => {
     setLabel(edge.label || "");
-  }, [edge]);
+    setData({ ...edge.data });
+  }, [edge.id]);
 
-  const handleChange = (value: string) => {
+  const handleChangeData = (key: string, value: any) => {
+    const updatedData = { ...data, [key]: value };
+    setData(updatedData);
+    onChange({
+      ...edge,
+      data: updatedData,
+    });
+  };
+
+  const handleChangeLabel = (value: string) => {
     // create a new edge containing edge data + new label
     // also update the data text property as the new label
     const updatedEdge: Edge = {
       ...edge,
       label: value,
-      data: { ...edge.data, text: value },
+      data: { ...data, text: value },
     };
     if (updatedEdge === edge) return;
     setLabel(value);
@@ -29,33 +43,49 @@ function EdgeEditor({ edge, onChange }: EdgeEditorProps) {
 
   return (
     <>
-      {/* Row tra gruppo field e gruppo pulsanti */}
-      <Stack rowGap={1} direction={"column"} sx={{ minWidth: 100 }}>
-        {/* Stack tra field */}
-        <Stack rowGap={0}>
-          {/* Se il nodo source è di tipo 'question' mostra anche il field per la label */}
-          {nodes.find((n) => n.id === edge.source)?.type === "question" ? (
-            /* Stack del field + label */
-            <Stack rowGap={0.3}>
+      {/* Se il nodo source è di tipo 'question' mostra anche il field per la label */}
+      {nodes.find((n) => n.id === edge.source)?.type === "question" ? (
+        /* Stack del field + label */
+        <>
+          <Stack rowGap={2} maxWidth={250}>
+            <Stack rowGap={0.5}>
               <label htmlFor="edge-label">
                 <span className="">
                   <strong>Edge Label</strong>
                 </span>
               </label>
-
               <Input
+                type="text"
                 id="edge-label"
                 value={(label as string) || ""}
-                onChange={(e) => handleChange(e.target.value)}
-                type="text"
+                onChange={(e) => handleChangeLabel(e.target.value)}
                 color="secondary"
               />
             </Stack>
-          ) : (
-            <></>
-          )}
-        </Stack>
-      </Stack>
+            <Stack rowGap={0.5}>
+              <label htmlFor="choice-index">
+                <span className="">
+                  <strong>Choice index</strong>
+                </span>
+              </label>
+              <Input
+                className="max-w-20"
+                type="number"
+                required
+                min={0}
+                max={10}
+                id="choice-index"
+                value={(data?.index as number) || ""}
+                placeholder="null"
+                onChange={(e) => handleChangeData("index", e.target.value)}
+                color="secondary"
+              />
+            </Stack>
+          </Stack>
+        </>
+      ) : (
+        <></>
+      )}
     </>
   );
 }
