@@ -5,20 +5,24 @@ import {
   Panel,
   ReactFlow,
   SelectionMode,
+  StepEdge,
   useEdgesState,
   useNodesState,
   useReactFlow,
   type Connection,
   type Edge,
   type EdgeMouseHandler,
+  type EdgeTypes,
   type Node,
   type NodeMouseHandler,
+  type NodeTypes,
 } from "@xyflow/react";
 import { useCallback, useState } from "react";
 
 import React from "react";
 import { v4 as uuidv4 } from "uuid";
 import ContextMenu from "../context-menu/components/ContextMenu";
+import BoxEdgeComponent from "../edges/components/boxEdgeComponent";
 import Header from "../header/components/Header";
 import type { GraphNode } from "../models/NodeTypes.model";
 import CommentNodeComponent, {
@@ -125,12 +129,17 @@ function createGraphNode(
 }
 
 // custom node types to pass as props to ReactFlow
-const nodeTypes = {
+const nodeTypes: NodeTypes = {
   statement: StatementNodeComponent,
   condition: ConditionalNodeComponent,
   question: QuestionNodeComponent,
   event: EventNodeComponent,
   comment: CommentNodeComponent,
+};
+
+const edgeTypes: EdgeTypes = {
+  default: StepEdge,
+  box: BoxEdgeComponent,
 };
 
 export default function GraphEditor() {
@@ -177,7 +186,15 @@ export default function GraphEditor() {
 
   const onConnect = useCallback(
     (params: Edge | Connection) => {
-      const editedEdge = { ...params, label: "", data: {} } as Edge;
+      const isQuestion =
+        flowNodes.find((e) => e.id === params.source)?.type === "question";
+
+      const editedEdge = {
+        ...params,
+        type: isQuestion ? "box" : "default",
+        label: "",
+        data: {},
+      } as Edge;
       const isNewEdge = !editedEdge.id;
       if (isNewEdge) editedEdge.id = `${uuidv4()}`;
 
@@ -303,6 +320,7 @@ export default function GraphEditor() {
         onEdgeContextMenu={handleEdgeContextMenu}
         onPaneContextMenu={handlePaneContextMenu}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         fitView
         minZoom={0.2}
       >
