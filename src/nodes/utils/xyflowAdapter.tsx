@@ -35,7 +35,7 @@ export function toXYFlowEdge(node: GraphNode): Edge[] {
     case "question":
       return node.choices.map((e) => ({
         id: node.id + "-" + e.next_node,
-        type: { step: StepEdge } as any,
+        type: node.type === "question" ? "box" : "default",
         source: node.id,
         target: e.next_node,
         label: e.text,
@@ -162,6 +162,7 @@ export function flowToGraphTree(nodes: Node[], edges: Edge[]): GraphNode[] {
           next_node: el.target,
           text: el.label ? el.label + "" : "",
           text_modifier: (el?.data?.text_modifier as TextModifier[]) || [],
+          color: el?.data?.color ? el.data.color + "" : "",
           index,
         };
         sourceNode.choices.push(choice);
