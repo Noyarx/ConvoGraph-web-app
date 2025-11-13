@@ -49,6 +49,21 @@ function EdgeEditor({ edge, onChange }: EdgeEditorProps) {
         <>
           <Stack rowGap={2} maxWidth={250}>
             <Stack rowGap={0.5}>
+              <label>
+                <span className="">
+                  <strong>Color</strong>
+                </span>
+              </label>
+              <input
+                className="rounded-md max-w-10"
+                type="color"
+                id="label-color"
+                value={data?.color || "#F5F5F5"}
+                onChange={(e) => handleChangeData("color", e.target.value)}
+              />
+            </Stack>
+
+            <Stack rowGap={0.5}>
               <label htmlFor="edge-label">
                 <span className="">
                   <strong>Edge Label</strong>
@@ -75,9 +90,14 @@ function EdgeEditor({ edge, onChange }: EdgeEditorProps) {
                 min={0}
                 max={10}
                 id="choice-index"
-                value={(data?.index as number) || ""}
+                value={data?.index ?? ""}
                 placeholder="null"
-                onChange={(e) => handleChangeData("index", e.target.value)}
+                onChange={(e) =>
+                  handleChangeData(
+                    "index",
+                    e.target.value === "" ? null : Number(e.target.value)
+                  )
+                }
                 color="secondary"
               />
             </Stack>

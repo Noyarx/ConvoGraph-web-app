@@ -35,7 +35,7 @@ export function toXYFlowEdge(node: GraphNode): Edge[] {
     case "question":
       return node.choices.map((e) => ({
         id: node.id + "-" + e.next_node,
-        type: { step: StepEdge } as any,
+        type: node.type === "question" ? "box" : "default",
         source: node.id,
         target: e.next_node,
         label: e.text,
@@ -148,9 +148,9 @@ export function flowToGraphTree(nodes: Node[], edges: Edge[]): GraphNode[] {
         // If index is not set, assign the smallest free index
         // otherwise set it as the one manually set
         let index: number;
-        const newIndex = el?.data?.index;
+        const newIndex = el?.data?.index as number;
         if (Number.isFinite(newIndex) && !usedIndexes.has(newIndex as number)) {
-          index = newIndex as number;
+          index = newIndex;
         } else {
           index = 0;
           while (usedIndexes.has(index)) index++;
@@ -162,6 +162,7 @@ export function flowToGraphTree(nodes: Node[], edges: Edge[]): GraphNode[] {
           next_node: el.target,
           text: el.label ? el.label + "" : "",
           text_modifier: (el?.data?.text_modifier as TextModifier[]) || [],
+          color: el?.data?.color ? el.data.color + "" : "",
           index,
         };
         sourceNode.choices.push(choice);
