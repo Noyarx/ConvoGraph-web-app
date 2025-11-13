@@ -148,9 +148,9 @@ export function flowToGraphTree(nodes: Node[], edges: Edge[]): GraphNode[] {
         // If index is not set, assign the smallest free index
         // otherwise set it as the one manually set
         let index: number;
-        const newIndex = el?.data?.index;
+        const newIndex = el?.data?.index as number;
         if (Number.isFinite(newIndex) && !usedIndexes.has(newIndex as number)) {
-          index = newIndex as number;
+          index = newIndex;
         } else {
           index = 0;
           while (usedIndexes.has(index)) index++;

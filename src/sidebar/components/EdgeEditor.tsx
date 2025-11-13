@@ -90,9 +90,14 @@ function EdgeEditor({ edge, onChange }: EdgeEditorProps) {
                 min={0}
                 max={10}
                 id="choice-index"
-                value={(data?.index as number) || ""}
+                value={data?.index ?? ""}
                 placeholder="null"
-                onChange={(e) => handleChangeData("index", e.target.value)}
+                onChange={(e) =>
+                  handleChangeData(
+                    "index",
+                    e.target.value === "" ? null : Number(e.target.value)
+                  )
+                }
                 color="secondary"
               />
             </Stack>

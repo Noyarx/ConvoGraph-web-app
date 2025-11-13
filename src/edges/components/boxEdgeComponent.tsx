@@ -58,15 +58,14 @@ const BoxEdgeComponent: FC<EdgeProps<Edge>> = ({
           }}
           className="nodrag nopan p-4 flex flex-col gap-1"
         >
-          <div className="flex flex-row justify-between gap-2 items-center font-bold">
-            <span>Choice</span>
-            {data?.index ? (
-              <Chip color={indexColor} label={`${data?.index}`} />
+          <div className="flex flex-row justify-center gap-2 items-center font-bold">
+            {data?.index !== null && data?.index !== undefined ? (
+              <Chip color={indexColor} label={`${Number(data?.index)}`} />
             ) : (
               <></>
             )}
           </div>
-          <p className="text-center break-words">{label}</p>
+          <p className="text-center break-words font-bold">{label}</p>
         </div>
       </EdgeLabelRenderer>
     </BaseEdge>
