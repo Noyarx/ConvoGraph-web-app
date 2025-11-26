@@ -1,4 +1,4 @@
-import { StepEdge, type Edge, type Node } from "@xyflow/react";
+import { type Edge, type Node } from "@xyflow/react";
 import type { DialogueChoice } from "../../models/DialogueChoice.model";
 import type { GraphNode } from "../../models/NodeTypes.model";
 import type { TextModifier } from "../../models/TextModifiers.model";
