@@ -366,8 +366,8 @@ export default function GraphEditor() {
         </Panel>
         <Panel
           position="bottom-left"
-          style={{ boxShadow: "0px 0px 3px 0.1vh #e6e6e6" }}
-          className="flex flex-row gap-2 rounded-xl border-none p-1 bg-surface-light bg-opacity-60"
+          style={{ boxShadow: "0px 0px 3px 0.1vh #00000014" }}
+          className="flex flex-row gap-2 border border-slate-100 rounded-xl p-1 bg-surface-light bg-opacity-60"
         >
           <Button
             onClick={flowHistory.undo}
