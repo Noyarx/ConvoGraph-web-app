@@ -1,13 +1,14 @@
 import { type Node, useReactFlow } from "@xyflow/react";
 import { v4 as uuidv4 } from "uuid";
+import { useFlowHistory } from "../../flow-history/FlowHistoryContext";
 // define node action handlers using reactflow hook
 export function useNodeActionHandlers({
   onEditElement,
 }: {
   onEditElement?: (element: Node) => void;
 }) {
-  const { getNodes, setNodes } = useReactFlow();
-
+  const { addNodes, deleteElements } = useReactFlow();
+  const flowHistory = useFlowHistory();
   const onEditNode = (node: Node) => {
     if (onEditElement) onEditElement(node);
   };
@@ -28,11 +29,12 @@ export function useNodeActionHandlers({
         data: node.data.data,
       },
     };
-    setNodes([...getNodes(), newNode]);
+    flowHistory.saveState();
+    addNodes(newNode);
   };
 
   const onDeleteNode = (node: Node) => {
-    setNodes(getNodes().filter((n) => n.id !== node.id));
+    deleteElements({ nodes: [node] });
   };
 
   return { onEditNode, onDuplicateNode, onDeleteNode };

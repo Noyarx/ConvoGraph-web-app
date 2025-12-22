@@ -11,6 +11,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import EdgeEditor from "./EdgeEditor";
 import NodeEditor from "./NodeEditor";
 import { CharacterDataProvider } from "../selectItems/CharacterDataContext";
+import { useFlowHistory } from "../../flow-history/FlowHistoryContext";
 
 // (in futuro aggiungeremo anche NodeEditor ecc.)
 
@@ -32,6 +33,8 @@ function Sidebar({
   const [element, setElement] = useState<Node | Edge | null>(selectedElement);
   const [modified, setModified] = useState(false);
 
+  const flowHistory = useFlowHistory();
+
   // update sidebar on newly selected node
   useEffect(() => {
     if (selectedElement) {
@@ -50,6 +53,7 @@ function Sidebar({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedElement || !modified) return;
+    flowHistory.saveState();
     if ("source" in selectedElement) {
       onSaveEdge(element as Edge);
     } else {
