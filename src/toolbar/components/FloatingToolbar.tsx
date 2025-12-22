@@ -37,7 +37,7 @@ function FloatingToolbar({ onAddNode, placement }: FloatingToolbarProps) {
       direction={"row"}
       spacing={1.3}
       className={
-        "flex flex-row justify-around rounded-md shadow-none border border-gray-50 p-1 bg-surface-light bg-opacity-60"
+        "flex flex-row justify-around rounded-lg shadow-none p-1 bg-surface-light bg-opacity-60"
       }
     >
       <Menu placement={placement || "top"}>

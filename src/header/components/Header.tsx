@@ -9,8 +9,10 @@ import {
   toXYFlowEdges,
   toXYFlowNodes,
 } from "../../nodes/utils/xyflowAdapter";
+import { useFlowHistory } from "../../flow-history/FlowHistoryContext";
 
 function Header() {
+  const flowHistory = useFlowHistory();
   const { getNodes, getEdges, setNodes, setEdges } = useReactFlow();
 
   const handleExport = () => {
@@ -25,12 +27,13 @@ function Header() {
   const handleImport = async () => {
     const importedTimeline = await importTimelineFromJSON();
     const { nodes } = importedTimeline;
-    // console.log(importedTimeline);
-    // set reactflow tree graph
+    // Set reactflow tree graph
     if (nodes) {
       setNodes(toXYFlowNodes(nodes));
       setEdges(toXYFlowEdges(nodes));
     }
+    // Reset undo-redo history stacks
+    flowHistory.clearHistory();
   };
 
   return (

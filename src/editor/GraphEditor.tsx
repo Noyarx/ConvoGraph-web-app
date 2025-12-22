@@ -1,3 +1,4 @@
+//#region IMPORTS
 import {
   addEdge,
   Background,
@@ -17,12 +18,15 @@ import {
   type NodeMouseHandler,
   type NodeTypes,
 } from "@xyflow/react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import { Button } from "@material-tailwind/react";
+import { RedoRounded, UndoRounded } from "@mui/icons-material";
 import React from "react";
 import { v4 as uuidv4 } from "uuid";
 import ContextMenu from "../context-menu/components/ContextMenu";
 import BoxEdgeComponent from "../edges/components/boxEdgeComponent";
+import { useFlowHistory } from "../flow-history/FlowHistoryContext";
 import Header from "../header/components/Header";
 import type { GraphNode } from "../models/NodeTypes.model";
 import CommentNodeComponent, {
@@ -42,6 +46,8 @@ import StatementNodeComponent, {
 } from "../nodes/components/StatementNodeComponent";
 import SideBar from "../sidebar/components/Sidebar";
 import FloatingToolbar from "../toolbar/components/FloatingToolbar";
+//#endregion
+
 function createGraphNode(
   type: "statement" | "question" | "condition" | "event" | "comment",
   id: string,
@@ -136,12 +142,13 @@ const nodeTypes: NodeTypes = {
   event: EventNodeComponent,
   comment: CommentNodeComponent,
 };
-
+// custom edge types to pass as props to ReactFlow
 const edgeTypes: EdgeTypes = {
   default: StepEdge,
   box: BoxEdgeComponent,
 };
 
+//#region COMPONENT
 export default function GraphEditor() {
   const { screenToFlowPosition } = useReactFlow();
   const initialNodes: Node[] = [];
@@ -150,11 +157,12 @@ export default function GraphEditor() {
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
 
+  const flowHistory = useFlowHistory();
+
   const [editingElement, setEditingElement] = useState<Node | Edge | null>(
     null
   );
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-
   const [contextMenu, setContextMenu] = useState({
     open: false,
     x: 0,
@@ -162,6 +170,7 @@ export default function GraphEditor() {
     type: null as "node" | "edge" | "pane" | null,
     target: null as Node | Edge | null,
   });
+
   // handler to create and add a new node
   const handleAddNode = useCallback(
     (
@@ -179,9 +188,10 @@ export default function GraphEditor() {
         data: createGraphNode(type, newId, position) as any,
       };
       // Create a new GraphNode using an incrementing number 'incr' as id
+      flowHistory.saveState();
       setFlowNodes((prev) => [...prev, newFlowNode]);
     },
-    [createGraphNode, setFlowNodes]
+    [createGraphNode, setFlowNodes, flowHistory.saveState]
   );
 
   const onConnect = useCallback(
@@ -198,9 +208,9 @@ export default function GraphEditor() {
       const isNewEdge = !editedEdge.id;
       if (isNewEdge) editedEdge.id = `${uuidv4()}`;
 
+      flowHistory.saveState();
       // update edges list with new edge
       setEdges((eds) => addEdge(editedEdge, eds));
-
       // open the edit modal only if the source node is a question
       setEditingElement(editedEdge);
       setSidebarOpen(true);
@@ -241,6 +251,7 @@ export default function GraphEditor() {
     setEditingElement(updatedEdge);
   };
 
+  //#region CLICK HANDLERS
   const handleNodeClick: NodeMouseHandler<Node> = useCallback(
     (_e: React.MouseEvent<Element, MouseEvent>, node: Node) => {
       setEditingElement(node);
@@ -295,6 +306,7 @@ export default function GraphEditor() {
     },
     []
   );
+  //#endregion
 
   const handleSidebarClose = () => {
     setEditingElement(null);
@@ -303,14 +315,36 @@ export default function GraphEditor() {
 
   const handleClose = () => setContextMenu((m) => ({ ...m, open: false }));
 
+  //#region SAVE/RESTORE STATE
+
+  useEffect(() => {
+    const handleKeyDown = (evt: KeyboardEvent) => {
+      if (evt.ctrlKey) {
+        switch (evt.key) {
+          case "z":
+            flowHistory.undo();
+            break;
+          case "y":
+            flowHistory.redo();
+            break;
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [flowHistory.undo, flowHistory.redo]);
+
+  //#endregion
+
+  //#region RETURN
   return (
     <div style={{ width: "100%", height: "100vh" }}>
       <ReactFlow
-        onDragOver={() => {}}
-        selectionMode={SelectionMode.Partial}
-        connectionRadius={40}
         nodes={flowNodes}
         edges={edges}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
@@ -319,13 +353,36 @@ export default function GraphEditor() {
         onNodeContextMenu={handleNodeContextMenu}
         onEdgeContextMenu={handleEdgeContextMenu}
         onPaneContextMenu={handlePaneContextMenu}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        fitView
+        onInit={flowHistory.setRfInstance}
+        onNodeDragStart={flowHistory.saveState} // save flow state when starting to move a node
+        onDelete={flowHistory.saveState} // save flow state before deleting an element
+        selectionMode={SelectionMode.Partial}
+        connectionRadius={40}
         minZoom={0.2}
+        fitView
       >
         <Panel className="flex flex-row">
           <Header />
+        </Panel>
+        <Panel
+          position="bottom-left"
+          style={{ boxShadow: "0px 0px 3px 0.1vh #e6e6e6" }}
+          className="flex flex-row gap-2 rounded-xl border-none p-1 bg-surface-light bg-opacity-60"
+        >
+          <Button
+            onClick={flowHistory.undo}
+            className="flex flex-row pl-1.5 pr-2 py-1 gap-1 rounded-2xl justify-between"
+          >
+            <UndoRounded />
+            {/* <span className="font-bold">Undo</span> */}
+          </Button>
+          <Button
+            className="flex flex-row pl-2 pr-1.5 py-1 gap-1 rounded-2xl justify-between"
+            onClick={flowHistory.redo}
+          >
+            {/* <span className="font-bold">Redo</span> */}
+            <RedoRounded />
+          </Button>
         </Panel>
         <Background />
         <Controls
@@ -334,7 +391,7 @@ export default function GraphEditor() {
           showInteractive={false}
           position="bottom-center"
           orientation="horizontal"
-          className=""
+          className="rounded-md"
           style={{
             display: "flex",
             flexDirection: "row",
@@ -367,4 +424,6 @@ export default function GraphEditor() {
       />
     </div>
   );
+  //#endregion
 }
+//#endregion

@@ -1,4 +1,5 @@
 import { type Edge, useReactFlow } from "@xyflow/react";
+import { useFlowHistory } from "../../flow-history/FlowHistoryContext";
 
 // define edge action handlers using reactflow hook
 export function useEdgeActionHandlers({
@@ -6,14 +7,15 @@ export function useEdgeActionHandlers({
 }: {
   onEditElement?: (element: Edge) => void;
 }) {
-  const { getEdges, setEdges } = useReactFlow();
-
+  const { deleteElements } = useReactFlow();
+  const flowHistory = useFlowHistory();
   const onEditEdge = (edge: Edge) => {
     if (onEditElement) onEditElement(edge);
   };
 
   const onDeleteEdge = (edge: Edge) => {
-    setEdges(getEdges().filter((n) => n.id !== edge.id));
+    flowHistory.saveState();
+    deleteElements({ edges: [edge] });
   };
   return { onEditEdge, onDeleteEdge };
 }
