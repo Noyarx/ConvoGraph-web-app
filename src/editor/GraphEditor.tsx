@@ -2,7 +2,6 @@
 import {
   addEdge,
   Background,
-  Controls,
   Panel,
   ReactFlow,
   SelectionMode,
@@ -357,6 +356,8 @@ export default function GraphEditor() {
         onNodeDragStart={flowHistory.saveState} // save flow state when starting to move a node
         onDelete={flowHistory.saveState} // save flow state before deleting an element
         selectionMode={SelectionMode.Partial}
+        selectionOnDrag={true}
+        panOnDrag={[1]} // only allow pane drag using middle mouse button
         connectionRadius={40}
         minZoom={0.2}
         fitView
@@ -385,12 +386,8 @@ export default function GraphEditor() {
           </Button>
         </Panel>
         <Background />
-        <Controls
-          showZoom={false}
-          showFitView={false}
-          showInteractive={false}
+        <Panel
           position="bottom-center"
-          orientation="horizontal"
           className="rounded-md"
           style={{
             display: "flex",
@@ -401,7 +398,7 @@ export default function GraphEditor() {
           }}
         >
           <FloatingToolbar onAddNode={handleAddNode} />
-        </Controls>
+        </Panel>
       </ReactFlow>
       <ContextMenu
         open={contextMenu.open}
