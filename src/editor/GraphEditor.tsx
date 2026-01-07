@@ -166,8 +166,8 @@ export default function GraphEditor() {
     open: false,
     x: 0,
     y: 0,
-    type: null as "node" | "edge" | "pane" | null,
-    target: null as Node | Edge | null,
+    type: null as "node" | "edge" | "pane" | "selection" | null,
+    target: null as Node | Edge | Node[] | Edge[] | null,
   });
 
   // handler to create and add a new node
@@ -305,6 +305,20 @@ export default function GraphEditor() {
     },
     []
   );
+
+  const handleSelectionContextMenu = useCallback(
+    (evt: MouseEvent | React.MouseEvent<Element, MouseEvent>) => {
+      evt.preventDefault();
+      setContextMenu({
+        open: true,
+        x: evt.clientX,
+        y: evt.clientY,
+        target: flowNodes.filter((node) => node.selected === true),
+        type: "selection",
+      });
+    },
+    []
+  );
   //#endregion
 
   const handleSidebarClose = () => {
@@ -352,6 +366,7 @@ export default function GraphEditor() {
         onNodeContextMenu={handleNodeContextMenu}
         onEdgeContextMenu={handleEdgeContextMenu}
         onPaneContextMenu={handlePaneContextMenu}
+        onSelectionContextMenu={handleSelectionContextMenu}
         onInit={flowHistory.setRfInstance}
         onNodeDragStart={flowHistory.saveState} // save flow state when starting to move a node
         onDelete={flowHistory.saveState} // save flow state before deleting an element

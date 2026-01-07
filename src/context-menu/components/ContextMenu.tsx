@@ -14,9 +14,11 @@ import { useMemo } from "react";
 import { useEdgeActionHandlers } from "../handlers/edgeActionHandlers";
 import { useNodeActionHandlers } from "../handlers/nodeActionHandlers";
 import { usePaneActionHandlers } from "../handlers/paneActionHandlers";
+import { useSelectionActionHandlers } from "../handlers/selectionActionHandlers";
 import { createEdgeMenuSections } from "../menuItems/edgeMenuSections";
 import { createNodeMenuSections } from "../menuItems/nodeMenuSections";
 import { createPaneMenuSections } from "../menuItems/paneMenuSections";
+import { createSelectionMenuSections } from "../menuItems/selectionMenuSections";
 import type { MenuSection } from "../models/MenuAction.model";
 
 interface ContextMenuProps {
@@ -25,7 +27,7 @@ interface ContextMenuProps {
   open: boolean;
   onClose: () => void;
   onEditElement: (element: Node | Edge) => void;
-  targetType: "node" | "edge" | "pane" | null;
+  targetType: "node" | "edge" | "pane" | "selection" | null;
   target: any;
 }
 
@@ -88,11 +90,15 @@ function ContextMenu({
   const nodeHandlers = useNodeActionHandlers({ onEditElement });
   const edgeHandlers = useEdgeActionHandlers({ onEditElement });
   const paneHandlers = usePaneActionHandlers({ x, y });
+  const selectionHandlers = useSelectionActionHandlers();
+
   const sections: MenuSection[] =
     targetType === "node"
       ? createNodeMenuSections(nodeHandlers)
       : targetType === "edge"
       ? createEdgeMenuSections(edgeHandlers)
+      : targetType === "selection"
+      ? createSelectionMenuSections(selectionHandlers)
       : createPaneMenuSections(paneHandlers);
 
   const renderActionButtons = useMemo(() => {
