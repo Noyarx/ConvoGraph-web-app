@@ -9,15 +9,15 @@ import {
   styled,
   type MenuProps,
 } from "@mui/material";
-import { useMemo } from "react";
-import type { MenuSection } from "../models/MenuAction.model";
-import { useNodeActionHandlers } from "../handlers/nodeActionHandlers";
-import { createNodeMenuSections } from "../menuItems/nodeMenuSections";
-import { useEdgeActionHandlers } from "../handlers/edgeActionHandlers";
-import { createEdgeMenuSections } from "../menuItems/edgeMenuSections";
 import type { Edge, Node } from "@xyflow/react";
+import { useMemo } from "react";
+import { useEdgeActionHandlers } from "../handlers/edgeActionHandlers";
+import { useNodeActionHandlers } from "../handlers/nodeActionHandlers";
 import { usePaneActionHandlers } from "../handlers/paneActionHandlers";
+import { createEdgeMenuSections } from "../menuItems/edgeMenuSections";
+import { createNodeMenuSections } from "../menuItems/nodeMenuSections";
 import { createPaneMenuSections } from "../menuItems/paneMenuSections";
+import type { MenuSection } from "../models/MenuAction.model";
 
 interface ContextMenuProps {
   x: number;
@@ -35,6 +35,10 @@ const getVariantClass = (item: any): string =>
   item?.variant === "critical"
     ? "!text-red-600 !text-opacity-85 hover:!bg-red-100"
     : "hover:!bg-slate-200 hover:!bg-opacity-90";
+const getKbdVariant = (item: any): string =>
+  item?.variant === "critical"
+    ? "border-red-200 group-hover:border-red-300"
+    : "border-slate-300 group-hover:border-slate-400";
 
 // mui style for context menu
 const StyledMenu = styled((props: MenuProps) => (
@@ -51,10 +55,10 @@ const StyledMenu = styled((props: MenuProps) => (
       padding: "4px 0",
     },
     "& .MuiMenuItem-root": {
-      paddingLeft: 10,
+      paddingLeft: 8,
       "& .MuiSvgIcon-root": {
         fontSize: 20,
-        marginRight: theme.spacing(1.5),
+        // marginRight: theme.spacing(0),
         ...theme.applyStyles("dark", {
           //   color: "inherit",
         }),
@@ -96,9 +100,7 @@ function ContextMenu({
       <div key={sec.id}>
         {sec.items.map((item) => (
           <MenuItem
-            className={`!flex !justify-between ${itemClass} ${getVariantClass(
-              item
-            )}`}
+            className={`group ${itemClass} ${getVariantClass(item)}`}
             key={item.id}
             onClick={() => {
               item.onClick(target);
@@ -109,7 +111,15 @@ function ContextMenu({
               {item.icon}
             </ListItemIcon>
             <ListItemText>{item.label}</ListItemText>
-            {item.shortcut && <kbd>{item.shortcut}</kbd>}
+            {item.shortcut && (
+              <kbd
+                className={`ml-4 px-2 py-0 text-sm rounded-md shadow border border-slate-200 ${getKbdVariant(
+                  item
+                )} ${getVariantClass(item)} `}
+              >
+                {item.shortcut}
+              </kbd>
+            )}
           </MenuItem>
         ))}
         {/* after each section render a Divider */}
