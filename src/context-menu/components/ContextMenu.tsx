@@ -139,7 +139,13 @@ function ContextMenu({
       open={open}
       onClose={onClose}
       anchorPosition={{ top: y, left: x }}
-      className="!rounded-2xl !shadow-none"
+      sx={{
+        "& .MuiPaper-root": {
+          transitionProperty: "opacity, transform",
+          transitionDuration: "160ms, 100ms !important",
+        },
+      }}
+      className="!rounded-2xl"
     >
       <MenuList className="!py-0 !outline-none">{renderActionButtons}</MenuList>
     </StyledMenu>
