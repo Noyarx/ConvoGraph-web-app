@@ -1,11 +1,11 @@
-import { Button, Menu } from "@material-tailwind/react";
-import { KeyboardArrowUpRounded } from "@mui/icons-material";
+import { Menu } from "@material-tailwind/react";
 import AltRouteRoundedIcon from "@mui/icons-material/AltRouteRounded";
 import ChatOutlinedIcon from "@mui/icons-material/ChatOutlined";
 import NewReleasesRoundedIcon from "@mui/icons-material/NewReleasesRounded";
 import QuestionMarkIcon from "@mui/icons-material/QuestionMark";
 import TagIcon from "@mui/icons-material/Tag";
-import type { nodeTypeString } from "../../models/NodeTypes.model";
+import type { JSX } from "react";
+import { useGraphActions } from "../../editor/useGraphActions";
 
 const buttonClass = "flex gap-2 bg-none";
 const quickColorTrans = {
@@ -14,27 +14,21 @@ const quickColorTrans = {
 };
 
 interface AddNodeMenuProps {
-  onAddNode: (type: nodeTypeString) => void;
+  triggerComponent: JSX.Element;
 }
 
-function AddNodeMenu({ onAddNode }: AddNodeMenuProps) {
+function AddNodeMenu({ triggerComponent }: AddNodeMenuProps) {
+  const { handleAddNode } = useGraphActions();
   return (
     <>
       <Menu>
-        <Menu.Trigger
-          as={Button}
-          variant="gradient"
-          className="flex pl-1 pr-2 min-w-20 align-middle justify-evenly"
-        >
-          <span>
-            <KeyboardArrowUpRounded viewBox="0 1 24 24" />
-          </span>
-          <span>Add Node</span>
-        </Menu.Trigger>
+        {triggerComponent}
         <Menu.Content className="w-40">
           <Menu.Item
             onClick={() => {
-              onAddNode("comment");
+              handleAddNode({
+                type: "comment",
+              });
             }}
             style={quickColorTrans}
             className={`${buttonClass} hover:!bg-green-200`}
@@ -46,7 +40,9 @@ function AddNodeMenu({ onAddNode }: AddNodeMenuProps) {
           </Menu.Item>
           <Menu.Item
             onClick={() => {
-              onAddNode("event");
+              handleAddNode({
+                type: "event",
+              });
             }}
             style={quickColorTrans}
             className={`${buttonClass} hover:!bg-orange-200`}
@@ -58,7 +54,9 @@ function AddNodeMenu({ onAddNode }: AddNodeMenuProps) {
           </Menu.Item>
           <Menu.Item
             onClick={() => {
-              onAddNode("condition");
+              handleAddNode({
+                type: "condition",
+              });
             }}
             style={quickColorTrans}
             className={`${buttonClass}  hover:!bg-pink-200`}
@@ -70,7 +68,9 @@ function AddNodeMenu({ onAddNode }: AddNodeMenuProps) {
           </Menu.Item>
           <Menu.Item
             onClick={() => {
-              onAddNode("question");
+              handleAddNode({
+                type: "question",
+              });
             }}
             style={quickColorTrans}
             className={`${buttonClass} hover:!bg-teal-500 hover:!bg-opacity-40`}
@@ -82,7 +82,9 @@ function AddNodeMenu({ onAddNode }: AddNodeMenuProps) {
           </Menu.Item>
           <Menu.Item
             onClick={() => {
-              onAddNode("statement");
+              handleAddNode({
+                type: "statement",
+              });
             }}
             style={quickColorTrans}
             className={`${buttonClass} hover:!bg-blue-500 hover:!bg-opacity-50`}

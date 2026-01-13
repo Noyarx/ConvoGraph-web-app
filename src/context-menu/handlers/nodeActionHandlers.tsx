@@ -18,6 +18,7 @@ export function useNodeActionHandlers({
     const offset = { x: 50, y: 120 };
     const newNode = {
       ...node,
+      selected: false,
       id: newId,
       position: {
         x: node.position.x + offset.x,

@@ -8,7 +8,6 @@ import {
   StepEdge,
   useEdgesState,
   useNodesState,
-  useReactFlow,
   type Connection,
   type Edge,
   type EdgeMouseHandler,
@@ -27,111 +26,14 @@ import ContextMenu from "../context-menu/components/ContextMenu";
 import BoxEdgeComponent from "../edges/components/boxEdgeComponent";
 import { useFlowHistory } from "../flow-history/FlowHistoryContext";
 import Header from "../header/components/Header";
-import type { GraphNode, nodeTypeString } from "../models/NodeTypes.model";
-import CommentNodeComponent, {
-  bgColor as commentBgColor,
-} from "../nodes/components/CommentNodeComponent";
-import ConditionalNodeComponent, {
-  bgColor as conditionBgColor,
-} from "../nodes/components/ConditionalNodeComponent";
-import EventNodeComponent, {
-  bgColor as eventBgColor,
-} from "../nodes/components/EventNodeComponent";
-import QuestionNodeComponent, {
-  bgColor as questionBgColor,
-} from "../nodes/components/QuestionNodeComponent";
-import StatementNodeComponent, {
-  bgColor as statementBgColor,
-} from "../nodes/components/StatementNodeComponent";
+import CommentNodeComponent from "../nodes/components/CommentNodeComponent";
+import ConditionalNodeComponent from "../nodes/components/ConditionalNodeComponent";
+import EventNodeComponent from "../nodes/components/EventNodeComponent";
+import QuestionNodeComponent from "../nodes/components/QuestionNodeComponent";
+import StatementNodeComponent from "../nodes/components/StatementNodeComponent";
 import SideBar from "../sidebar/components/Sidebar";
 import FloatingToolbar from "../toolbar/components/FloatingToolbar";
 //#endregion
-
-function createGraphNode(
-  type: "statement" | "question" | "condition" | "event" | "comment",
-  id: string,
-  position = { x: 100, y: 100 }
-): GraphNode {
-  switch (type) {
-    case "statement":
-      return {
-        id,
-        type,
-        next_node: "",
-        node_info: {
-          position,
-          title: "Nuova frase",
-          color: statementBgColor,
-        },
-        data: {
-          speaker: "Matthew",
-          mood: "happy",
-          text: "Ciao, sono Matthew. In realtà sono solo un nuovo nodo blu.",
-        },
-      };
-    case "question":
-      return {
-        id,
-        type,
-        node_info: {
-          position,
-          title: "Nuova Domanda",
-          color: questionBgColor,
-        },
-        data: {
-          speaker: "Matthew",
-          mood: "happy",
-          text: "Ciao, sono Matthew. In realtà sono solo un nuovo nodo blu.",
-        },
-        choices: [],
-      };
-    case "condition":
-      return {
-        id,
-        type,
-        next_node_true: "",
-        next_node_false: "",
-        node_info: {
-          position,
-          title: "Nuova Condition",
-          color: conditionBgColor,
-        },
-        data: {
-          var_name: "weaponsFound",
-          operator: ">=",
-          value: 2,
-        },
-      };
-    case "event":
-      return {
-        id,
-        type,
-        next_node: "",
-        node_info: {
-          position,
-          title: "Nuovo Evento",
-          color: eventBgColor,
-        },
-        data: {
-          event_name: "unEvento",
-          parameters: { someParam: 7 },
-        },
-      };
-    case "comment":
-      return {
-        id,
-        type,
-        node_info: {
-          position,
-          title: "Nuovo Commento",
-          color: commentBgColor,
-        },
-        data: {
-          text: "# Questo è un commento",
-        },
-      };
-  }
-}
 
 // custom node types to pass as props to ReactFlow
 const nodeTypes: NodeTypes = {
@@ -149,7 +51,6 @@ const edgeTypes: EdgeTypes = {
 
 //#region COMPONENT
 export default function GraphEditor() {
-  const { screenToFlowPosition } = useReactFlow();
   const initialNodes: Node[] = [];
   const initialEdges: Edge[] = [];
 
@@ -169,29 +70,6 @@ export default function GraphEditor() {
     type: null as "node" | "edge" | "pane" | "selection" | null,
     target: null as Node | Edge | Node[] | Edge[] | null,
   });
-
-  // handler to create and add a new node
-  const handleAddNode = useCallback(
-    (
-      type: nodeTypeString,
-      position = screenToFlowPosition({
-        x: screen.width / 2,
-        y: screen.height / 2,
-      })
-    ) => {
-      const newId = uuidv4();
-      const newFlowNode = {
-        type,
-        id: newId,
-        position,
-        data: createGraphNode(type, newId, position) as any,
-      };
-      // Create a new GraphNode using an incrementing number 'incr' as id
-      flowHistory.saveState();
-      setFlowNodes((prev) => [...prev, newFlowNode]);
-    },
-    [createGraphNode, setFlowNodes, flowHistory.saveState]
-  );
 
   const onConnect = useCallback(
     (params: Edge | Connection) => {
@@ -412,7 +290,7 @@ export default function GraphEditor() {
             marginTop: 20,
           }}
         >
-          <FloatingToolbar onAddNode={handleAddNode} />
+          <FloatingToolbar />
         </Panel>
       </ReactFlow>
       <ContextMenu
