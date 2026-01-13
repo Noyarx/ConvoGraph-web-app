@@ -374,7 +374,7 @@ export default function GraphEditor() {
         selectionOnDrag={true}
         panOnDrag={[1]} // only allow pane drag using middle mouse button
         connectionRadius={40}
-        minZoom={0.2}
+        minZoom={0.02}
         fitView
       >
         <Panel className="flex flex-row">
