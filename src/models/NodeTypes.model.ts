@@ -8,6 +8,13 @@ import type {
 } from "./NodeDataTypes.model";
 import type { NodeInfo } from "./NodeInfo.model";
 
+export type nodeTypeString =
+  | "statement"
+  | "question"
+  | "condition"
+  | "event"
+  | "comment";
+
 // Main node to instantiate and render in the graph
 export type GraphNode =
   | StatementNode
