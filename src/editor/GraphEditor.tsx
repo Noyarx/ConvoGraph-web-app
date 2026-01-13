@@ -27,7 +27,7 @@ import ContextMenu from "../context-menu/components/ContextMenu";
 import BoxEdgeComponent from "../edges/components/boxEdgeComponent";
 import { useFlowHistory } from "../flow-history/FlowHistoryContext";
 import Header from "../header/components/Header";
-import type { GraphNode } from "../models/NodeTypes.model";
+import type { GraphNode, nodeTypeString } from "../models/NodeTypes.model";
 import CommentNodeComponent, {
   bgColor as commentBgColor,
 } from "../nodes/components/CommentNodeComponent";
@@ -173,7 +173,7 @@ export default function GraphEditor() {
   // handler to create and add a new node
   const handleAddNode = useCallback(
     (
-      type: "statement" | "question" | "condition" | "event" | "comment",
+      type: nodeTypeString,
       position = screenToFlowPosition({
         x: screen.width / 2,
         y: screen.height / 2,

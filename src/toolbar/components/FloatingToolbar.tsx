@@ -4,22 +4,9 @@ import type { nodeTypeString } from "../../models/NodeTypes.model";
 
 interface FloatingToolbarProps {
   onAddNode: (type: nodeTypeString) => void;
-  placement?:
-    | "top"
-    | "top-start"
-    | "top-end"
-    | "bottom"
-    | "bottom-start"
-    | "bottom-end"
-    | "right"
-    | "right-start"
-    | "right-end"
-    | "left"
-    | "left-start"
-    | "left-end";
 }
 
-function FloatingToolbar({ onAddNode, placement }: FloatingToolbarProps) {
+function FloatingToolbar({ onAddNode }: FloatingToolbarProps) {
   return (
     <Stack
       direction={"row"}
@@ -28,7 +15,7 @@ function FloatingToolbar({ onAddNode, placement }: FloatingToolbarProps) {
         "flex flex-row p-1 border border-slate-100 rounded-lg shadow-none bg-surface-light bg-opacity-60 justify-around"
       }
     >
-      <AddNodeMenu placement={placement} onAddNode={onAddNode} />
+      <AddNodeMenu onAddNode={onAddNode} />
     </Stack>
   );
 }

@@ -15,25 +15,12 @@ const quickColorTrans = {
 
 interface AddNodeMenuProps {
   onAddNode: (type: nodeTypeString) => void;
-  placement?:
-    | "top"
-    | "top-start"
-    | "top-end"
-    | "bottom"
-    | "bottom-start"
-    | "bottom-end"
-    | "right"
-    | "right-start"
-    | "right-end"
-    | "left"
-    | "left-start"
-    | "left-end";
 }
 
-function AddNodeMenu({ onAddNode, placement }: AddNodeMenuProps) {
+function AddNodeMenu({ onAddNode }: AddNodeMenuProps) {
   return (
     <>
-      <Menu placement={placement || "top"}>
+      <Menu>
         <Menu.Trigger
           as={Button}
           variant="gradient"
