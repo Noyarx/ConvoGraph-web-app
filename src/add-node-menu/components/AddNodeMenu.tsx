@@ -5,7 +5,7 @@ import NewReleasesRoundedIcon from "@mui/icons-material/NewReleasesRounded";
 import QuestionMarkIcon from "@mui/icons-material/QuestionMark";
 import TagIcon from "@mui/icons-material/Tag";
 import type { JSX } from "react";
-import { useGraphActions } from "../../editor/useGraphActions";
+import { useGraphActions } from "../../editor/UseGraphActions";
 
 const buttonClass = "flex gap-2 bg-none";
 const quickColorTrans = {

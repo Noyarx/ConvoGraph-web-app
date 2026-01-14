@@ -8,6 +8,7 @@ import { bgColor as conditionBgColor } from "../nodes/components/ConditionalNode
 import { bgColor as eventBgColor } from "../nodes/components/EventNodeComponent";
 import { bgColor as questionBgColor } from "../nodes/components/QuestionNodeComponent";
 import { bgColor as statementBgColor } from "../nodes/components/StatementNodeComponent";
+import type { addNodeProps, GraphActions } from "./GraphActions.model";
 
 function createGraphNode(
   type: nodeTypeString,
@@ -95,13 +96,7 @@ function createGraphNode(
   }
 }
 
-interface addNodeProps {
-  position?: { x: number; y: number };
-  node?: Node;
-  type?: nodeTypeString;
-}
-
-export function useGraphActions() {
+export function useGraphActions(): GraphActions {
   const { addNodes, addEdges, deleteElements, screenToFlowPosition } =
     useReactFlow();
   const flowHistory = useFlowHistory();
