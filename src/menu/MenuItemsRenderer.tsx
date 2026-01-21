@@ -4,15 +4,35 @@ import {
   ListItemText,
   MenuItem as MuiMenuItem,
 } from "@mui/material";
-import type { MenuItem } from "./models/MenuItem.model";
+import type { MenuActionItem, MenuItem } from "./models/MenuItem.model";
 import { SubmenuItem } from "./SubMenuItem";
 
 export interface MenuItemsRendererProps {
   items: MenuItem[];
+  openPath: string[];
+  setOpenPath: (path: string[]) => void;
+  parentPath?: string[];
+
   onClose: () => void;
 }
+const opacityValue: string = "18";
+function getVariantColor(item: MenuActionItem): string {
+  switch (item.variant) {
+    case "critical":
+      return "#d42b2b";
+    default:
+      return "";
+  }
+}
 
-export function MenuItemsRenderer({ items, onClose }: MenuItemsRendererProps) {
+export function MenuItemsRenderer({
+  items,
+  openPath,
+  setOpenPath,
+  parentPath,
+  onClose,
+}: MenuItemsRendererProps) {
+  const currentPath = parentPath ?? [];
   return (
     <>
       {items.map((item, index) => {
@@ -24,19 +44,29 @@ export function MenuItemsRenderer({ items, onClose }: MenuItemsRendererProps) {
             return (
               <MuiMenuItem
                 key={item.id}
+                onMouseEnter={() => {
+                  setOpenPath(currentPath);
+                }}
                 onClick={() => {
                   item.command();
                   onClose();
                 }}
-                sx={
-                  item.variant === "critical"
-                    ? {
-                        color: "error.main",
-                      }
-                    : undefined
-                }
+                sx={{
+                  color: getVariantColor(item),
+                  ":hover": {
+                    backgroundColor: getVariantColor(item) + opacityValue,
+                  },
+                }}
               >
-                {item.icon && <ListItemIcon>{item.icon}</ListItemIcon>}
+                {item.icon && (
+                  <ListItemIcon
+                    sx={{
+                      color: getVariantColor(item),
+                    }}
+                  >
+                    {item.icon}
+                  </ListItemIcon>
+                )}
                 <ListItemText>{item.label}</ListItemText>
                 {item.shortcut && (
                   <kbd style={{ marginLeft: 16, opacity: 0.6 }}>
@@ -47,8 +77,16 @@ export function MenuItemsRenderer({ items, onClose }: MenuItemsRendererProps) {
             );
 
           case "submenu":
-            return <SubmenuItem key={item.id} item={item} onClose={onClose} />;
-
+            return (
+              <SubmenuItem
+                key={item.id}
+                item={item}
+                openPath={openPath}
+                setOpenPath={setOpenPath}
+                parentPath={currentPath}
+                onClose={onClose}
+              />
+            );
           default:
             return null;
         }

@@ -13,7 +13,7 @@ import type { addNodeProps, GraphActions } from "./GraphActions.model";
 function createGraphNode(
   type: nodeTypeString,
   id: string,
-  position: { x: number; y: number } = { x: 0, y: 0 }
+  position: { x: number; y: number } = { x: 0, y: 0 },
 ): GraphNode {
   switch (type) {
     case "statement":
@@ -97,62 +97,104 @@ function createGraphNode(
 }
 
 export function useGraphActions(): GraphActions {
-  const { addNodes, addEdges, deleteElements, screenToFlowPosition } =
+  const { addNodes, addEdges, deleteElements, screenToFlowPosition, fitView } =
     useReactFlow();
   const flowHistory = useFlowHistory();
 
+  const offset = { x: 120, y: 120 };
+
+  const centerView = () => {
+    fitView();
+  };
+
   const handleAddNode = useCallback(
-    ({ position, node, type }: addNodeProps) => {
+    ({ position, type }: addNodeProps) => {
       const newId = uuidv4();
-      const offset = { x: 120, y: 120 };
       const pos = position
-        ? position
+        ? screenToFlowPosition(position)
         : screenToFlowPosition({
             x: screen.width / 2 - offset.x,
             y: screen.height / 2 - offset.y,
           });
 
-      const newNode: Node = node
-        ? {
-            ...node,
-            selected: false,
-            id: newId,
-            position: {
-              x: node.position.x + offset.x,
-              y: node.position.y + offset.y,
-            },
-            data: {
-              ...node.data,
-              node_info: node.data.node_info,
-              data: node.data.data,
-            },
-          }
-        : {
-            type,
-            id: newId,
-            position: pos,
-            data: createGraphNode(type || "statement", newId, pos) as any,
-          };
+      const newNode: Node = {
+        type,
+        id: newId,
+        position: pos,
+        data: createGraphNode(type || "statement", newId, pos) as any,
+      };
       flowHistory.saveState();
       addNodes(newNode);
     },
-    [addNodes, flowHistory.saveState]
+    [addNodes, flowHistory.saveState],
+  );
+
+  const handleDuplicateNode = useCallback(
+    (node: Node) => {
+      const newId = uuidv4();
+      const copiedNode = {
+        ...node,
+        selected: false,
+        id: newId,
+        position: {
+          x: node.position.x + offset.x,
+          y: node.position.y + offset.y,
+        },
+        data: {
+          ...node.data,
+          node_info: node.data.node_info,
+          data: node.data.data,
+        },
+      };
+      flowHistory.saveState();
+      addNodes(copiedNode);
+    },
+    [flowHistory.saveState, addNodes],
+  );
+
+  const handleDuplicateNodes = useCallback(
+    (nodes: Node[]) => {
+      // const selected = getNodes().filter((n) => n.selected === true);
+
+      const newNodes: Node[] = nodes.map((node) => ({
+        ...node,
+        selected: false,
+        id: uuidv4(),
+        position: {
+          x: node.position.x + offset.x,
+          y: node.position.y + offset.y,
+        },
+        data: {
+          ...node.data,
+          node_info: node.data.node_info,
+          data: node.data.data,
+        },
+      }));
+      flowHistory.saveState();
+      addNodes(newNodes);
+    },
+    [flowHistory.saveState, addNodes],
   );
 
   const handleDeleteNode = useCallback(
     (node: Node) => {
-      flowHistory.saveState();
       deleteElements({ nodes: [node] });
     },
-    [deleteElements, flowHistory.saveState]
+    [deleteElements, flowHistory.saveState],
+  );
+
+  const handleDeleteNodes = useCallback(
+    (nodes: Node[]) => {
+      deleteElements({ nodes });
+    },
+    [flowHistory.saveState, deleteElements],
   );
 
   const handleDeleteEdge = useCallback(
     (edge: Edge) => {
-      flowHistory.saveState();
       deleteElements({ edges: [edge] });
     },
-    [deleteElements, flowHistory.saveState]
+    [deleteElements, flowHistory.saveState],
   );
 
   const handleConnect = useCallback(
@@ -160,13 +202,17 @@ export function useGraphActions(): GraphActions {
       flowHistory.saveState();
       addEdges(edge);
     },
-    [addEdges, flowHistory.saveState]
+    [addEdges, flowHistory.saveState],
   );
 
   return {
     handleAddNode,
+    handleDuplicateNode,
+    handleDuplicateNodes,
     handleDeleteNode,
+    handleDeleteNodes,
     handleDeleteEdge,
     handleConnect,
+    centerView,
   };
 }

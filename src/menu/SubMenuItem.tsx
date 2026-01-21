@@ -1,44 +1,79 @@
-import { ListItemIcon, ListItemText } from "@mui/material";
-import { Menu, MenuItem as MuiMenuItem } from "@mui/material";
-import { useState } from "react";
-import type { MenuItem } from "./models/MenuItem.model";
+import {
+  ListItemIcon,
+  ListItemText,
+  MenuItem as MuiMenuItem,
+  Popover,
+} from "@mui/material";
+import { useRef, useState } from "react";
 import { MenuItemsRenderer } from "./MenuItemsRenderer";
+import type { MenuItem } from "./models/MenuItem.model";
 
 export interface SubmenuItemProps {
   item: Extract<MenuItem, { type: "submenu" }>;
+
+  openPath: string[];
+  setOpenPath: (path: string[]) => void;
+  parentPath: string[];
+
   onClose: () => void;
 }
 
-export function SubmenuItem({ item, onClose }: SubmenuItemProps) {
+export function SubmenuItem({
+  item,
+  openPath,
+  setOpenPath,
+  parentPath,
+  onClose,
+}: SubmenuItemProps) {
+  const submenuPath = [...parentPath, item.id];
+
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const hoverTimeout = useRef<number>(280);
 
-  const open = Boolean(anchorEl);
-
-  const handleOpen = (e: React.MouseEvent<HTMLElement>) => {
+  const handleEnter = (e: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(e.currentTarget);
+    hoverTimeout.current = window.setTimeout(() => {
+      setOpenPath(submenuPath);
+    }, 280);
   };
 
-  const handleClose = () => {
-    setAnchorEl(null);
+  const handleLeave = () => {
+    clearTimeout(hoverTimeout.current);
   };
+
+  const isOpen =
+    openPath.length >= submenuPath.length &&
+    submenuPath.every((id, i) => openPath[i] === id);
 
   return (
     <>
-      <MuiMenuItem onMouseEnter={handleOpen} onMouseLeave={handleClose}>
+      <MuiMenuItem onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
         {item.icon && <ListItemIcon>{item.icon}</ListItemIcon>}
         <ListItemText>{item.label}</ListItemText>
         <span style={{ marginLeft: "auto" }}>▶</span>
       </MuiMenuItem>
-
-      <Menu
-        open={open}
+      <Popover
+        open={isOpen}
         anchorEl={anchorEl}
-        onClose={handleClose}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "left" }}
+        sx={{
+          pointerEvents: "none",
+        }}
+        slotProps={{
+          paper: {
+            sx: { pointerEvents: "auto" },
+          },
+        }}
       >
-        <MenuItemsRenderer items={item.items} onClose={onClose} />
-      </Menu>
+        <MenuItemsRenderer
+          openPath={openPath}
+          setOpenPath={setOpenPath}
+          parentPath={submenuPath}
+          items={item.items}
+          onClose={onClose}
+        />
+      </Popover>
     </>
   );
 }

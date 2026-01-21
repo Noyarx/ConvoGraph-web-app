@@ -2,9 +2,12 @@ import type { ReactNode } from "react";
 
 export type MenuItem = MenuActionItem | MenuSubmenuItem | MenuSeparator;
 
-export interface MenuActionItem {
-  type: "action";
+export interface MenuBaseItem {
   id: string;
+}
+
+export interface MenuActionItem extends MenuBaseItem {
+  type: "action";
   label: string;
   icon?: ReactNode;
   shortcut?: string;
@@ -12,9 +15,8 @@ export interface MenuActionItem {
   command: () => void;
 }
 
-export interface MenuSubmenuItem {
+export interface MenuSubmenuItem extends MenuBaseItem {
   type: "submenu";
-  id: string;
   label: string;
   icon?: ReactNode;
   items: MenuItem[]; //

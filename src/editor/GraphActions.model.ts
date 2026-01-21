@@ -3,13 +3,16 @@ import type { nodeTypeString } from "../models/NodeTypes.model";
 
 export interface addNodeProps {
   position?: { x: number; y: number };
-  node?: Node;
   type?: nodeTypeString;
 }
 
 export interface GraphActions {
-  handleAddNode: ({ position, node, type }: addNodeProps) => void;
+  handleAddNode: ({ position, type }: addNodeProps) => void;
+  handleDuplicateNode: (node: Node) => void;
+  handleDuplicateNodes: (nodes: Node[]) => void;
   handleDeleteNode: (node: Node) => void;
+  handleDeleteNodes: (nodes: Node[]) => void;
   handleDeleteEdge: (edge: Edge) => void;
   handleConnect: (edge: Edge) => void;
+  centerView: () => void;
 }
