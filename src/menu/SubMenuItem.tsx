@@ -2,9 +2,12 @@ import {
   ListItemIcon,
   ListItemText,
   MenuItem as MuiMenuItem,
-  Popover,
 } from "@mui/material";
 import { useRef, useState } from "react";
+import {
+  getMenuActionItemColors,
+  StyledPopover,
+} from "./context-menu/components/ContextMenuStyle";
 import { MenuItemsRenderer } from "./MenuItemsRenderer";
 import type { MenuItem } from "./models/MenuItem.model";
 
@@ -47,12 +50,18 @@ export function SubmenuItem({
 
   return (
     <>
-      <MuiMenuItem onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
-        {item.icon && <ListItemIcon>{item.icon}</ListItemIcon>}
+      <MuiMenuItem
+        onMouseEnter={handleEnter}
+        onMouseLeave={handleLeave}
+        className={`${getMenuActionItemColors(item)}`}
+      >
+        {item.icon && (
+          <ListItemIcon className={`!text-inherit`}>{item.icon}</ListItemIcon>
+        )}
         <ListItemText>{item.label}</ListItemText>
         <span style={{ marginLeft: "auto" }}>▶</span>
       </MuiMenuItem>
-      <Popover
+      <StyledPopover
         open={isOpen}
         anchorEl={anchorEl}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
@@ -73,7 +82,7 @@ export function SubmenuItem({
           items={item.items}
           onClose={onClose}
         />
-      </Popover>
+      </StyledPopover>
     </>
   );
 }

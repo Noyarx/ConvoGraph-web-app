@@ -1,5 +1,5 @@
-import { Menu } from "@mui/material";
 import { useState } from "react";
+import { StyledMenu } from "./context-menu/components/ContextMenuStyle";
 import { MenuItemsRenderer } from "./MenuItemsRenderer";
 import type { MenuItem } from "./models/MenuItem.model";
 
@@ -40,7 +40,7 @@ export default function GenericMenu({
 
   if (!items) return;
   return (
-    <Menu
+    <StyledMenu
       open={open}
       onClose={handleClose}
       slotProps={{ transition: { onExited: () => setIsMenuActive(true) } }} //re-enable menu on animation ended
@@ -58,6 +58,6 @@ export default function GenericMenu({
         items={items}
         onClose={handleClose}
       />
-    </Menu>
+    </StyledMenu>
   );
 }

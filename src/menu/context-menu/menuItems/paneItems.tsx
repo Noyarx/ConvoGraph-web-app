@@ -1,4 +1,12 @@
-import { Add, Fullscreen } from "@mui/icons-material";
+import {
+  Add,
+  Fullscreen,
+  Tag,
+  NewReleasesRounded,
+  AltRouteRounded,
+  QuestionMark,
+  ChatOutlined,
+} from "@mui/icons-material";
 import type { GraphActions } from "../../../editor/GraphActions.model";
 import type { MenuItem } from "../../models/MenuItem.model";
 
@@ -17,35 +25,35 @@ export function getPaneContextMenuItems(
           type: "action",
           id: "action-add-node-statement",
           label: "Statement",
-          icon: <Add />,
+          icon: <ChatOutlined />,
           command: () => actions.handleAddNode({ position, type: "statement" }),
         },
         {
           type: "action",
           id: "action-add-node-question",
           label: "Question",
-          icon: <Add />,
+          icon: <QuestionMark />,
           command: () => actions.handleAddNode({ position, type: "question" }),
         },
         {
           type: "action",
           id: "action-add-node-condition",
           label: "Condition",
-          icon: <Add />,
+          icon: <AltRouteRounded className="rotate-180" />,
           command: () => actions.handleAddNode({ position, type: "condition" }),
         },
         {
           type: "action",
           id: "action-add-node-event",
           label: "Event",
-          icon: <Add />,
+          icon: <NewReleasesRounded />,
           command: () => actions.handleAddNode({ position, type: "event" }),
         },
         {
           type: "action",
           id: "action-add-node-comment",
           label: "Comment",
-          icon: <Add />,
+          icon: <Tag />,
           command: () => actions.handleAddNode({ position, type: "comment" }),
         },
       ],
