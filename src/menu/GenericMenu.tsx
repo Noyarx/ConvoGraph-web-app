@@ -1,3 +1,4 @@
+import type { PopoverOrigin } from "@mui/material";
 import { useState } from "react";
 import { StyledMenu } from "./context-menu/components/ContextMenuStyle";
 import { MenuItemsRenderer } from "./MenuItemsRenderer";
@@ -8,16 +9,23 @@ interface GenericMenuProps {
   open: boolean;
   onClose: () => void;
 
+  orientation?: "top" | "bottom";
+  anchorOffset?: { x: number; y: number };
   anchorEl?: HTMLElement | null;
   anchorPosition?: { x: number; y: number };
+  anchorOrigin?: PopoverOrigin;
+  transformOrigin?: PopoverOrigin;
 }
 
 export default function GenericMenu({
   items,
   open,
   onClose,
+  anchorOffset,
   anchorEl,
   anchorPosition,
+  anchorOrigin,
+  transformOrigin,
 }: GenericMenuProps) {
   // const [openSubmenuId, setOpenSubmenuId] = useState<string | null>(null);
   const [openPath, setOpenPath] = useState<string[]>([]);
@@ -43,14 +51,19 @@ export default function GenericMenu({
     <StyledMenu
       open={open}
       onClose={handleClose}
-      slotProps={{ transition: { onExited: () => setIsMenuActive(true) } }} //re-enable menu on animation ended
       anchorEl={anchorEl}
-      anchorReference={anchorPosition ? "anchorPosition" : "anchorEl"}
       anchorPosition={
         anchorPosition
           ? { top: anchorPosition.y, left: anchorPosition.x }
           : undefined
       }
+      anchorReference={anchorPosition ? "anchorPosition" : "anchorEl"}
+      anchorOrigin={anchorOrigin}
+      transformOrigin={transformOrigin}
+      sx={anchorOffset && { mt: anchorOffset?.y, ml: anchorOffset?.x }}
+      slotProps={{
+        transition: { onExited: () => setIsMenuActive(true) },
+      }} //re-enable menu on animation ended
     >
       <MenuItemsRenderer
         openPath={openPath}

@@ -1,22 +1,13 @@
-import { Button, Menu } from "@material-tailwind/react";
-import { KeyboardArrowUpRounded } from "@mui/icons-material";
+import { Button } from "@material-tailwind/react";
+import { Add, Fullscreen } from "@mui/icons-material";
 import { Stack } from "@mui/material";
-import AddNodeMenu from "../../add-node-menu/components/AddNodeMenu";
-
-const toolbarMenuButton = (
-  <Menu.Trigger
-    as={Button}
-    variant="gradient"
-    className="flex pl-1 pr-2 min-w-20 align-middle justify-evenly"
-  >
-    <span>
-      <KeyboardArrowUpRounded viewBox="0 1 24 24" />
-    </span>
-    <span>Add Node</span>
-  </Menu.Trigger>
-);
+import { useGraphActions } from "../../editor/UseGraphActions";
+import { getAddNodeMenuItems } from "../../menu/addNodeMenuItems";
+import ButtonMenu from "../../menu/button-menu/ButtonMenu";
 
 function FloatingToolbar() {
+  const actions = useGraphActions();
+  const addNodeMenuItems = getAddNodeMenuItems({ actions });
   return (
     <Stack
       direction={"row"}
@@ -25,7 +16,18 @@ function FloatingToolbar() {
         "flex flex-row p-1 border border-slate-100 rounded-lg shadow-none bg-surface-light bg-opacity-60 justify-around"
       }
     >
-      <AddNodeMenu triggerComponent={toolbarMenuButton} />
+      <Button
+        className={`rounded-xl p-1.5`}
+        onClick={() => actions.centerView()}
+      >
+        <Fullscreen />
+      </Button>
+      <ButtonMenu
+        anchorOffset={{ x: 0, y: -1.5 }}
+        label={"Add new node"}
+        startIcon={<Add />}
+        items={addNodeMenuItems}
+      />
     </Stack>
   );
 }
