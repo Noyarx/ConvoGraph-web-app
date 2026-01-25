@@ -8,7 +8,6 @@ import {
   StepEdge,
   useEdgesState,
   useNodesState,
-  useReactFlow,
   type Connection,
   type Edge,
   type EdgeMouseHandler,
@@ -23,115 +22,18 @@ import { Button } from "@material-tailwind/react";
 import { RedoRounded, UndoRounded } from "@mui/icons-material";
 import React from "react";
 import { v4 as uuidv4 } from "uuid";
-import ContextMenu from "../context-menu/components/ContextMenu";
 import BoxEdgeComponent from "../edges/components/boxEdgeComponent";
 import { useFlowHistory } from "../flow-history/FlowHistoryContext";
 import Header from "../header/components/Header";
-import type { GraphNode, nodeTypeString } from "../models/NodeTypes.model";
-import CommentNodeComponent, {
-  bgColor as commentBgColor,
-} from "../nodes/components/CommentNodeComponent";
-import ConditionalNodeComponent, {
-  bgColor as conditionBgColor,
-} from "../nodes/components/ConditionalNodeComponent";
-import EventNodeComponent, {
-  bgColor as eventBgColor,
-} from "../nodes/components/EventNodeComponent";
-import QuestionNodeComponent, {
-  bgColor as questionBgColor,
-} from "../nodes/components/QuestionNodeComponent";
-import StatementNodeComponent, {
-  bgColor as statementBgColor,
-} from "../nodes/components/StatementNodeComponent";
+import ContextMenu from "../menu/context-menu/components/ContextMenu";
+import CommentNodeComponent from "../nodes/components/CommentNodeComponent";
+import ConditionalNodeComponent from "../nodes/components/ConditionalNodeComponent";
+import EventNodeComponent from "../nodes/components/EventNodeComponent";
+import QuestionNodeComponent from "../nodes/components/QuestionNodeComponent";
+import StatementNodeComponent from "../nodes/components/StatementNodeComponent";
 import SideBar from "../sidebar/components/Sidebar";
 import FloatingToolbar from "../toolbar/components/FloatingToolbar";
 //#endregion
-
-function createGraphNode(
-  type: "statement" | "question" | "condition" | "event" | "comment",
-  id: string,
-  position = { x: 100, y: 100 }
-): GraphNode {
-  switch (type) {
-    case "statement":
-      return {
-        id,
-        type,
-        next_node: "",
-        node_info: {
-          position,
-          title: "Nuova frase",
-          color: statementBgColor,
-        },
-        data: {
-          speaker: "Matthew",
-          mood: "happy",
-          text: "Ciao, sono Matthew. In realtà sono solo un nuovo nodo blu.",
-        },
-      };
-    case "question":
-      return {
-        id,
-        type,
-        node_info: {
-          position,
-          title: "Nuova Domanda",
-          color: questionBgColor,
-        },
-        data: {
-          speaker: "Matthew",
-          mood: "happy",
-          text: "Ciao, sono Matthew. In realtà sono solo un nuovo nodo blu.",
-        },
-        choices: [],
-      };
-    case "condition":
-      return {
-        id,
-        type,
-        next_node_true: "",
-        next_node_false: "",
-        node_info: {
-          position,
-          title: "Nuova Condition",
-          color: conditionBgColor,
-        },
-        data: {
-          var_name: "weaponsFound",
-          operator: ">=",
-          value: 2,
-        },
-      };
-    case "event":
-      return {
-        id,
-        type,
-        next_node: "",
-        node_info: {
-          position,
-          title: "Nuovo Evento",
-          color: eventBgColor,
-        },
-        data: {
-          event_name: "unEvento",
-          parameters: { someParam: 7 },
-        },
-      };
-    case "comment":
-      return {
-        id,
-        type,
-        node_info: {
-          position,
-          title: "Nuovo Commento",
-          color: commentBgColor,
-        },
-        data: {
-          text: "# Questo è un commento",
-        },
-      };
-  }
-}
 
 // custom node types to pass as props to ReactFlow
 const nodeTypes: NodeTypes = {
@@ -149,7 +51,6 @@ const edgeTypes: EdgeTypes = {
 
 //#region COMPONENT
 export default function GraphEditor() {
-  const { screenToFlowPosition } = useReactFlow();
   const initialNodes: Node[] = [];
   const initialEdges: Edge[] = [];
 
@@ -159,39 +60,15 @@ export default function GraphEditor() {
   const flowHistory = useFlowHistory();
 
   const [editingElement, setEditingElement] = useState<Node | Edge | null>(
-    null
+    null,
   );
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [contextMenu, setContextMenu] = useState({
     open: false,
-    x: 0,
-    y: 0,
+    position: { x: 0, y: 0 },
     type: null as "node" | "edge" | "pane" | "selection" | null,
     target: null as Node | Edge | Node[] | Edge[] | null,
   });
-
-  // handler to create and add a new node
-  const handleAddNode = useCallback(
-    (
-      type: nodeTypeString,
-      position = screenToFlowPosition({
-        x: screen.width / 2,
-        y: screen.height / 2,
-      })
-    ) => {
-      const newId = uuidv4();
-      const newFlowNode = {
-        type,
-        id: newId,
-        position,
-        data: createGraphNode(type, newId, position) as any,
-      };
-      // Create a new GraphNode using an incrementing number 'incr' as id
-      flowHistory.saveState();
-      setFlowNodes((prev) => [...prev, newFlowNode]);
-    },
-    [createGraphNode, setFlowNodes, flowHistory.saveState]
-  );
 
   const onConnect = useCallback(
     (params: Edge | Connection) => {
@@ -214,7 +91,7 @@ export default function GraphEditor() {
       setEditingElement(editedEdge);
       setSidebarOpen(true);
     },
-    [setEdges, flowNodes]
+    [setEdges, flowNodes],
   );
 
   const handleSaveNode = (updatedNode: Record<string, any>) => {
@@ -235,7 +112,7 @@ export default function GraphEditor() {
     };
 
     setFlowNodes((prev) =>
-      prev.map((n) => (n.id === updatedNode.id ? syncedNode : (n as Node)))
+      prev.map((n) => (n.id === updatedNode.id ? syncedNode : (n as Node))),
     );
 
     // Usa la versione sincronizzata per aggiornare la sidebar
@@ -245,7 +122,7 @@ export default function GraphEditor() {
   // Update edges list
   const handleSaveEdge = (updatedEdge: Edge) => {
     setEdges((eds) =>
-      eds.map((e) => (e.id === updatedEdge.id ? updatedEdge : e))
+      eds.map((e) => (e.id === updatedEdge.id ? updatedEdge : e)),
     );
     setEditingElement(updatedEdge);
   };
@@ -256,7 +133,7 @@ export default function GraphEditor() {
       setEditingElement(node);
       setSidebarOpen(true);
     },
-    [flowNodes]
+    [flowNodes],
   );
 
   const handleEdgeClick: EdgeMouseHandler<Edge> = useCallback(
@@ -264,46 +141,44 @@ export default function GraphEditor() {
       setEditingElement(edge);
       setSidebarOpen(true);
     },
-    [edges]
+    [edges],
   );
   const handleNodeContextMenu = useCallback(
     (evt: React.MouseEvent<Element, MouseEvent>, node: Node) => {
       evt.preventDefault();
       setContextMenu({
         open: true,
-        x: evt.clientX,
-        y: evt.clientY,
+        position: { x: evt.clientX, y: evt.clientY },
         target: node,
         type: "node",
       });
     },
-    [flowNodes]
+    [flowNodes],
   );
   const handleEdgeContextMenu = useCallback(
     (evt: React.MouseEvent<Element, MouseEvent>, edge: Edge) => {
       evt.preventDefault();
       setContextMenu({
         open: true,
-        x: evt.clientX,
-        y: evt.clientY,
+        position: { x: evt.clientX, y: evt.clientY },
         target: edge,
         type: "edge",
       });
     },
-    [edges]
+    [edges],
   );
   const handlePaneContextMenu = useCallback(
     (evt: MouseEvent | React.MouseEvent<Element, MouseEvent>) => {
       evt.preventDefault();
+      // console.log("click position: ", { x: evt.clientX, y: evt.clientY });
       setContextMenu({
         open: true,
-        x: evt.clientX,
-        y: evt.clientY,
+        position: { x: evt.clientX, y: evt.clientY },
         target: null,
         type: "pane",
       });
     },
-    []
+    [setContextMenu],
   );
 
   const handleSelectionContextMenu = useCallback(
@@ -311,13 +186,12 @@ export default function GraphEditor() {
       evt.preventDefault();
       setContextMenu({
         open: true,
-        x: evt.clientX,
-        y: evt.clientY,
+        position: { x: evt.clientX, y: evt.clientY },
         target: flowNodes.filter((node) => node.selected === true),
         type: "selection",
       });
     },
-    []
+    [setContextMenu, flowNodes, edges],
   );
   //#endregion
 
@@ -412,18 +286,13 @@ export default function GraphEditor() {
             marginTop: 20,
           }}
         >
-          <FloatingToolbar onAddNode={handleAddNode} />
+          <FloatingToolbar />
         </Panel>
       </ReactFlow>
       <ContextMenu
         open={contextMenu.open}
         onClose={handleClose}
-        onEditElement={(element) => {
-          setEditingElement(element);
-          setSidebarOpen(true);
-        }}
-        x={contextMenu.x}
-        y={contextMenu.y}
+        position={contextMenu.position}
         targetType={contextMenu.type}
         target={contextMenu.target}
       />
