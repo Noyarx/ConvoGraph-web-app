@@ -1,13 +1,41 @@
 import { Button } from "@material-tailwind/react";
-import { Add, Fullscreen } from "@mui/icons-material";
+import {
+  AltRouteRounded,
+  ChatOutlined,
+  Fullscreen,
+  NewReleasesRounded,
+  QuestionMark,
+  Tag,
+} from "@mui/icons-material";
 import { Stack } from "@mui/material";
+import type { ReactNode } from "react";
 import { useGraphActions } from "../../editor/UseGraphActions";
-import { getAddNodeMenuItems } from "../../menu/addNodeMenuItems";
-import ButtonMenu from "../../menu/button-menu/ButtonMenu";
+import { getSelectNodeMenuItems } from "../../menu/selectNodeMenuItems";
+import SplitButton from "../../menu/split-button/SplitButton";
+import type { NodeTypeString } from "../../models/NodeTypes.model";
+
+function getNodeTypeIcon(type: NodeTypeString): ReactNode | null {
+  switch (type) {
+    case "statement":
+      return <ChatOutlined />;
+    case "question":
+      return <QuestionMark />;
+    case "condition":
+      return <AltRouteRounded />;
+    case "event":
+      return <NewReleasesRounded />;
+    case "comment":
+      return <Tag />;
+    default:
+      return null;
+  }
+}
 
 function FloatingToolbar() {
   const actions = useGraphActions();
-  const addNodeMenuItems = getAddNodeMenuItems({ actions });
+  // const addNodeMenuItems = getAddNodeMenuItems({ actions });
+  const selectNodeMenuItems = getSelectNodeMenuItems({ actions });
+  const currentNodeType = actions.getSelectedNodeType();
   return (
     <Stack
       direction={"row"}
@@ -17,16 +45,19 @@ function FloatingToolbar() {
       }
     >
       <Button
-        className={`rounded-xl p-1.5`}
+        className={`rounded-2xl p-2`}
         onClick={() => actions.centerView()}
       >
         <Fullscreen />
       </Button>
-      <ButtonMenu
+      <SplitButton
+        items={selectNodeMenuItems}
+        icon={getNodeTypeIcon(currentNodeType)}
+        label={`Add ${currentNodeType}`}
         anchorOffset={{ x: 0, y: -1.5 }}
-        label={"Add new node"}
-        startIcon={<Add />}
-        items={addNodeMenuItems}
+        onClick={() => {
+          actions.handleAddNode({ type: actions.getSelectedNodeType() });
+        }}
       />
     </Stack>
   );

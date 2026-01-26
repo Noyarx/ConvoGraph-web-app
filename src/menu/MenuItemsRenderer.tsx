@@ -10,9 +10,12 @@ import { SubmenuItem } from "./SubMenuItem";
 
 export interface MenuItemsRendererProps {
   items: MenuItem[];
+
   openPath: string[];
   setOpenPath: (path: string[]) => void;
   parentPath?: string[];
+
+  isActive?: boolean;
 
   onClose: () => void;
 }
@@ -22,6 +25,7 @@ export function MenuItemsRenderer({
   openPath,
   setOpenPath,
   parentPath,
+  isActive,
   onClose,
 }: MenuItemsRendererProps) {
   const currentPath = parentPath ?? [];
@@ -45,6 +49,7 @@ export function MenuItemsRenderer({
                   setOpenPath(currentPath);
                 }}
                 onClick={() => {
+                  if (!isActive) return;
                   item.command();
                   onClose();
                 }}
@@ -72,6 +77,7 @@ export function MenuItemsRenderer({
                 openPath={openPath}
                 setOpenPath={setOpenPath}
                 parentPath={currentPath}
+                isActive={isActive}
                 onClose={onClose}
               />
             );
