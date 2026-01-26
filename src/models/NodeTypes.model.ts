@@ -8,7 +8,7 @@ import type {
 } from "./NodeDataTypes.model";
 import type { NodeInfo } from "./NodeInfo.model";
 
-export type nodeTypeString =
+export type NodeTypeString =
   | "statement"
   | "question"
   | "condition"

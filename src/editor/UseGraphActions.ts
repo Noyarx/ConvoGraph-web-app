@@ -1,8 +1,8 @@
 import { useReactFlow, type Edge, type Node } from "@xyflow/react";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { useFlowHistory } from "../flow-history/FlowHistoryContext";
-import type { GraphNode, nodeTypeString } from "../models/NodeTypes.model";
+import type { GraphNode, NodeTypeString } from "../models/NodeTypes.model";
 import { bgColor as commentBgColor } from "../nodes/components/CommentNodeComponent";
 import { bgColor as conditionBgColor } from "../nodes/components/ConditionalNodeComponent";
 import { bgColor as eventBgColor } from "../nodes/components/EventNodeComponent";
@@ -11,7 +11,7 @@ import { bgColor as statementBgColor } from "../nodes/components/StatementNodeCo
 import type { addNodeProps, GraphActions } from "./GraphActions.model";
 
 function createGraphNode(
-  type: nodeTypeString,
+  type: NodeTypeString,
   id: string,
   position: { x: number; y: number } = { x: 0, y: 0 },
 ): GraphNode {
@@ -106,6 +106,9 @@ export function useGraphActions(): GraphActions {
   const centerView = () => {
     fitView();
   };
+  const [selectedType, setSelectedType] = useState<NodeTypeString>("statement");
+  const getSelectedNodeType = () => selectedType;
+  const setSelectedNodeType = (type: NodeTypeString) => setSelectedType(type);
 
   const handleAddNode = useCallback(
     ({ position, type }: addNodeProps) => {
@@ -214,5 +217,7 @@ export function useGraphActions(): GraphActions {
     handleDeleteEdge,
     handleConnect,
     centerView,
+    getSelectedNodeType,
+    setSelectedNodeType,
   };
 }

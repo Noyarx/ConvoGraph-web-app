@@ -66,6 +66,7 @@ export default function GenericMenu({
       }} //re-enable menu on animation ended
     >
       <MenuItemsRenderer
+        isActive={isMenuActive}
         openPath={openPath}
         setOpenPath={trySetOpenPath}
         items={items}

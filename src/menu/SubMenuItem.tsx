@@ -18,6 +18,8 @@ export interface SubmenuItemProps {
   setOpenPath: (path: string[]) => void;
   parentPath: string[];
 
+  isActive?: boolean;
+
   onClose: () => void;
 }
 
@@ -26,6 +28,7 @@ export function SubmenuItem({
   openPath,
   setOpenPath,
   parentPath,
+  isActive,
   onClose,
 }: SubmenuItemProps) {
   const submenuPath = [...parentPath, item.id];
@@ -76,6 +79,7 @@ export function SubmenuItem({
         }}
       >
         <MenuItemsRenderer
+          isActive={isActive}
           openPath={openPath}
           setOpenPath={setOpenPath}
           parentPath={submenuPath}
