@@ -35,7 +35,7 @@ function FloatingToolbar() {
   const actions = useGraphActions();
   // const addNodeMenuItems = getAddNodeMenuItems({ actions });
   const selectNodeMenuItems = getSelectNodeMenuItems({ actions });
-
+  const currentNodeType = actions.getSelectedNodeType();
   return (
     <Stack
       direction={"row"}
@@ -52,8 +52,8 @@ function FloatingToolbar() {
       </Button>
       <SplitButton
         items={selectNodeMenuItems}
-        icon={getNodeTypeIcon(actions.getSelectedNodeType())}
-        label={"Add new node"}
+        icon={getNodeTypeIcon(currentNodeType)}
+        label={`Add ${currentNodeType}`}
         anchorOffset={{ x: 0, y: -1.5 }}
         onClick={() => {
           actions.handleAddNode({ type: actions.getSelectedNodeType() });

@@ -28,9 +28,11 @@ export default function SplitButton({
 
   return (
     <>
-      <div className={`flex flex-row items-center bg-slate-800 rounded-xl`}>
+      <div
+        className={`flex flex-row min-w-[186px] items-center bg-slate-800 rounded-xl`}
+      >
         <Button
-          className={`flex flew-row justify-between gap-1 px-1 pl-1.5 rounded-s-xl rounded-e-sm`}
+          className={`flex flew-grow min-w-36 justify-stretch gap-1 px-1 pl-1.5 rounded-s-xl rounded-e-sm`}
           onClick={onClick}
         >
           {icon && <span className={``}>{icon}</span>}
@@ -49,7 +51,7 @@ export default function SplitButton({
             setEl(e.currentTarget.parentElement);
             setOpen(!open);
           }}
-          className={`rounded-e-xl rounded-s-sm px-1 pr-1.5`}
+          className={`flex-grow rounded-e-xl rounded-s-sm px-1 pr-1.5`}
         >
           {(label || icon) && (
             <span
