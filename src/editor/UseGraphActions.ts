@@ -1,12 +1,8 @@
-import {
-  useReactFlow,
-  type Edge,
-  type FinalConnectionState,
-  type Node,
-} from "@xyflow/react";
+import { useReactFlow, type Edge, type Node } from "@xyflow/react";
 import { useCallback, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { useFlowHistory } from "../flow-history/FlowHistoryContext";
+import { useMenu } from "../menu/context/MenuContext";
 import type { GraphNode, NodeTypeString } from "../models/NodeTypes.model";
 import { bgColor as commentBgColor } from "../nodes/components/CommentNodeComponent";
 import { bgColor as conditionBgColor } from "../nodes/components/ConditionalNodeComponent";
@@ -101,9 +97,33 @@ function createGraphNode(
   }
 }
 
+function createNewEdge(
+  source: Node,
+  target: Node,
+  sourceHandle?: string,
+): Edge {
+  const isQuestion = source.type === "question";
+  return {
+    id: uuidv4(),
+    source: source.id,
+    sourceHandle: sourceHandle ?? null,
+    target: target.id,
+    targetHandle: null,
+    type: isQuestion ? "box" : "default",
+    label: "",
+    data: {},
+  } as Edge;
+}
+
 export function useGraphActions(): GraphActions {
-  const { addNodes, addEdges, deleteElements, screenToFlowPosition, fitView } =
-    useReactFlow();
+  const {
+    getEdges,
+    addNodes,
+    addEdges,
+    deleteElements,
+    screenToFlowPosition,
+    fitView,
+  } = useReactFlow();
   const flowHistory = useFlowHistory();
 
   const offset = { x: 120, y: 120 };
@@ -133,6 +153,8 @@ export function useGraphActions(): GraphActions {
       };
       flowHistory.saveState();
       addNodes(newNode);
+
+      return newNode ?? null;
     },
     [addNodes, flowHistory.saveState],
   );
@@ -184,6 +206,15 @@ export function useGraphActions(): GraphActions {
     [flowHistory.saveState, addNodes],
   );
 
+  const handleConnectNode = useCallback(
+    (sourceNode: Node, targetNode: Node, sourceHandle?: string) => {
+      const newEdge = createNewEdge(sourceNode, targetNode, sourceHandle);
+
+      addEdges(newEdge);
+    },
+    [getEdges, createNewEdge, addEdges],
+  );
+
   const handleDeleteNode = useCallback(
     (node: Node) => {
       deleteElements({ nodes: [node] });
@@ -205,25 +236,14 @@ export function useGraphActions(): GraphActions {
     [deleteElements, flowHistory.saveState],
   );
 
-  const handleOnConnectEnd = useCallback(
-    (event: MouseEvent | TouchEvent, connectionState: FinalConnectionState) => {
-      console.log("onConnectionEnd!\nConnection state: ", connectionState);
-      if (connectionState.isValid) return;
-
-      // flowHistory.saveState();
-      // addEdges(con);
-    },
-    [addEdges, flowHistory.saveState],
-  );
-
   return {
     handleAddNode,
     handleDuplicateNode,
     handleDuplicateNodes,
+    handleConnectNode,
     handleDeleteNode,
     handleDeleteNodes,
     handleDeleteEdge,
-    handleOnConnectEnd,
     centerView,
     getSelectedNodeType,
     setSelectedNodeType,
