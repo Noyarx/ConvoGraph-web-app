@@ -112,7 +112,7 @@ export function flowToGraphTree(nodes: Node[], edges: Edge[]): GraphNode[] {
   // Create a key:value map where key is the node's id and value is the whole GraphNode
   const graphMap: Record<string, GraphNode> = graphNodes.reduce(
     (acc, curr) => ({ ...acc, [curr.id]: curr }),
-    {}
+    {},
   );
 
   /*
@@ -162,7 +162,7 @@ export function flowToGraphTree(nodes: Node[], edges: Edge[]): GraphNode[] {
           next_node: el.target,
           text: el.label ? el.label + "" : "",
           text_modifier: (el?.data?.text_modifier as TextModifier[]) || [],
-          color: el?.data?.color ? el.data.color + "" : "",
+          color: el?.data?.color ? el.data.color + "" : "#F5F5F5",
           index,
         };
         sourceNode.choices.push(choice);
