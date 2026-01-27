@@ -1,5 +1,5 @@
 import { useReactFlow, type Edge, type Node } from "@xyflow/react";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { useFlowHistory } from "../flow-history/FlowHistoryContext";
 import type { GraphNode, NodeTypeString } from "../models/NodeTypes.model";
@@ -9,6 +9,7 @@ import { bgColor as eventBgColor } from "../nodes/components/EventNodeComponent"
 import { bgColor as questionBgColor } from "../nodes/components/QuestionNodeComponent";
 import { bgColor as statementBgColor } from "../nodes/components/StatementNodeComponent";
 import type { addNodeProps, GraphActions } from "./GraphActions.model";
+import { useGraphState } from "./graph-state/GraphStateContext";
 
 function createGraphNode(
   type: NodeTypeString,
@@ -130,9 +131,9 @@ export function useGraphActions(): GraphActions {
   const centerView = () => {
     fitView();
   };
-  const [selectedType, setSelectedType] = useState<NodeTypeString>("statement");
-  const getSelectedNodeType = () => selectedType;
-  const setSelectedNodeType = (type: NodeTypeString) => setSelectedType(type);
+  const { setSelectedNodeType } = useGraphState();
+
+  const selectNodeType = (type: NodeTypeString) => setSelectedNodeType(type);
 
   const handleAddNode = useCallback(
     ({ position, type }: addNodeProps) => {
@@ -152,10 +153,10 @@ export function useGraphActions(): GraphActions {
       };
       flowHistory.saveState();
       addNodes(newNode);
-
+      type && selectNodeType(type);
       return newNode ?? null;
     },
-    [addNodes, flowHistory.saveState],
+    [addNodes, selectNodeType, flowHistory.saveState],
   );
 
   const handleDuplicateNode = useCallback(
@@ -243,8 +244,7 @@ export function useGraphActions(): GraphActions {
     handleDeleteNode,
     handleDeleteNodes,
     handleDeleteEdge,
+    selectNodeType,
     centerView,
-    getSelectedNodeType,
-    setSelectedNodeType,
   };
 }

@@ -9,6 +9,7 @@ import {
 } from "@mui/icons-material";
 import { Stack } from "@mui/material";
 import type { ReactNode } from "react";
+import { useGraphState } from "../../editor/graph-state/GraphStateContext";
 import { useGraphActions } from "../../editor/UseGraphActions";
 import { getSelectNodeMenuItems } from "../../menu/selectNodeMenuItems";
 import SplitButton from "../../menu/split-button/SplitButton";
@@ -34,8 +35,8 @@ function getNodeTypeIcon(type: NodeTypeString): ReactNode | null {
 function FloatingToolbar() {
   const actions = useGraphActions();
   // const addNodeMenuItems = getAddNodeMenuItems({ actions });
+  const { selectedNodeType } = useGraphState();
   const selectNodeMenuItems = getSelectNodeMenuItems({ actions });
-  const currentNodeType = actions.getSelectedNodeType();
   return (
     <Stack
       direction={"row"}
@@ -52,11 +53,11 @@ function FloatingToolbar() {
       </Button>
       <SplitButton
         items={selectNodeMenuItems}
-        icon={getNodeTypeIcon(currentNodeType)}
-        label={`Add ${currentNodeType}`}
+        icon={getNodeTypeIcon(selectedNodeType)}
+        label={`Add ${selectedNodeType}`}
         anchorOffset={{ x: 0, y: -1.5 }}
         onClick={() => {
-          actions.handleAddNode({ type: actions.getSelectedNodeType() });
+          actions.handleAddNode({ type: selectedNodeType });
         }}
       />
     </Stack>

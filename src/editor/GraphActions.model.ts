@@ -18,7 +18,6 @@ export interface GraphActions {
   handleDeleteNode: (node: Node) => void;
   handleDeleteNodes: (nodes: Node[]) => void;
   handleDeleteEdge: (edge: Edge) => void;
+  selectNodeType: (type: NodeTypeString) => void;
   centerView: () => void;
-  getSelectedNodeType: () => NodeTypeString;
-  setSelectedNodeType: (type: NodeTypeString) => void;
 }
