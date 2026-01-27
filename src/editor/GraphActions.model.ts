@@ -1,4 +1,9 @@
-import type { Edge, Node } from "@xyflow/react";
+import type {
+  Connection,
+  Edge,
+  FinalConnectionState,
+  Node,
+} from "@xyflow/react";
 import type { NodeTypeString } from "../models/NodeTypes.model";
 
 export interface addNodeProps {
@@ -13,7 +18,10 @@ export interface GraphActions {
   handleDeleteNode: (node: Node) => void;
   handleDeleteNodes: (nodes: Node[]) => void;
   handleDeleteEdge: (edge: Edge) => void;
-  handleConnect: (edge: Edge) => void;
+  handleOnConnectEnd: (
+    event: MouseEvent | TouchEvent,
+    connectionState: FinalConnectionState,
+  ) => void;
   centerView: () => void;
   getSelectedNodeType: () => NodeTypeString;
   setSelectedNodeType: (type: NodeTypeString) => void;

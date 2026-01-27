@@ -1,4 +1,9 @@
-import { useReactFlow, type Edge, type Node } from "@xyflow/react";
+import {
+  useReactFlow,
+  type Edge,
+  type FinalConnectionState,
+  type Node,
+} from "@xyflow/react";
 import { useCallback, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { useFlowHistory } from "../flow-history/FlowHistoryContext";
@@ -200,10 +205,13 @@ export function useGraphActions(): GraphActions {
     [deleteElements, flowHistory.saveState],
   );
 
-  const handleConnect = useCallback(
-    (edge: Edge) => {
-      flowHistory.saveState();
-      addEdges(edge);
+  const handleOnConnectEnd = useCallback(
+    (event: MouseEvent | TouchEvent, connectionState: FinalConnectionState) => {
+      console.log("onConnectionEnd!\nConnection state: ", connectionState);
+      if (connectionState.isValid) return;
+
+      // flowHistory.saveState();
+      // addEdges(con);
     },
     [addEdges, flowHistory.saveState],
   );
@@ -215,7 +223,7 @@ export function useGraphActions(): GraphActions {
     handleDeleteNode,
     handleDeleteNodes,
     handleDeleteEdge,
-    handleConnect,
+    handleOnConnectEnd,
     centerView,
     getSelectedNodeType,
     setSelectedNodeType,
