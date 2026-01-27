@@ -115,7 +115,7 @@ export default function GraphEditor() {
         anchorPosition: evtPos,
       });
     },
-    [openMenu, getConnectNodeMenuItems],
+    [openMenu, getConnectNodeMenuItems, flowHistory.saveState],
   );
 
   const handleSaveNode = (updatedNode: Record<string, any>) => {
