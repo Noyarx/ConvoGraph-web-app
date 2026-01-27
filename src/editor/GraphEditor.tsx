@@ -12,6 +12,7 @@ import {
   type Edge,
   type EdgeMouseHandler,
   type EdgeTypes,
+  type FinalConnectionState,
   type Node,
   type NodeMouseHandler,
   type NodeTypes,
@@ -25,7 +26,9 @@ import { v4 as uuidv4 } from "uuid";
 import BoxEdgeComponent from "../edges/components/boxEdgeComponent";
 import { useFlowHistory } from "../flow-history/FlowHistoryContext";
 import Header from "../header/components/Header";
+import { getConnectNodeMenuItems } from "../menu/connectNodeMenuItems";
 import ContextMenu from "../menu/context-menu/components/ContextMenu";
+import { useMenu } from "../menu/context/MenuContext";
 import CommentNodeComponent from "../nodes/components/CommentNodeComponent";
 import ConditionalNodeComponent from "../nodes/components/ConditionalNodeComponent";
 import EventNodeComponent from "../nodes/components/EventNodeComponent";
@@ -33,6 +36,7 @@ import QuestionNodeComponent from "../nodes/components/QuestionNodeComponent";
 import StatementNodeComponent from "../nodes/components/StatementNodeComponent";
 import SideBar from "../sidebar/components/Sidebar";
 import FloatingToolbar from "../toolbar/components/FloatingToolbar";
+import { useGraphActions } from "./UseGraphActions";
 //#endregion
 
 // custom node types to pass as props to ReactFlow
@@ -58,7 +62,8 @@ export default function GraphEditor() {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
 
   const flowHistory = useFlowHistory();
-
+  const actions = useGraphActions();
+  const { openMenu } = useMenu();
   const [editingElement, setEditingElement] = useState<Node | Edge | null>(
     null,
   );
@@ -74,7 +79,6 @@ export default function GraphEditor() {
     (params: Edge | Connection) => {
       const isQuestion =
         flowNodes.find((e) => e.id === params.source)?.type === "question";
-
       const editedEdge = {
         ...params,
         type: isQuestion ? "box" : "default",
@@ -82,7 +86,7 @@ export default function GraphEditor() {
         data: {},
       } as Edge;
       const isNewEdge = !editedEdge.id;
-      if (isNewEdge) editedEdge.id = `${uuidv4()}`;
+      if (isNewEdge) editedEdge.id = uuidv4();
 
       flowHistory.saveState();
       // update edges list with new edge
@@ -92,6 +96,26 @@ export default function GraphEditor() {
       setSidebarOpen(true);
     },
     [setEdges, flowNodes],
+  );
+
+  const handleOnConnectEnd = useCallback(
+    (evt: any, connectionState: FinalConnectionState) => {
+      if (connectionState.isValid) return;
+      const evtPos = { x: evt.clientX, y: evt.clientY };
+      const sourceNode = connectionState.fromNode as Node;
+      const sourceHandle = connectionState?.fromHandle?.id ?? undefined;
+      openMenu({
+        id: "connect-node-menu",
+        items: getConnectNodeMenuItems({
+          actions,
+          sourceNode,
+          sourceHandle,
+          position: evtPos,
+        }),
+        anchorPosition: evtPos,
+      });
+    },
+    [openMenu, getConnectNodeMenuItems],
   );
 
   const handleSaveNode = (updatedNode: Record<string, any>) => {
@@ -138,6 +162,7 @@ export default function GraphEditor() {
 
   const handleEdgeClick: EdgeMouseHandler<Edge> = useCallback(
     (_e: React.MouseEvent<Element, MouseEvent>, edge: Edge) => {
+      // console.log("Clicked edge: ", edge);
       setEditingElement(edge);
       setSidebarOpen(true);
     },
@@ -241,6 +266,7 @@ export default function GraphEditor() {
         onEdgeContextMenu={handleEdgeContextMenu}
         onPaneContextMenu={handlePaneContextMenu}
         onSelectionContextMenu={handleSelectionContextMenu}
+        onConnectEnd={handleOnConnectEnd}
         onInit={flowHistory.setRfInstance}
         onNodeDragStart={flowHistory.saveState} // save flow state when starting to move a node
         onDelete={flowHistory.saveState} // save flow state before deleting an element
