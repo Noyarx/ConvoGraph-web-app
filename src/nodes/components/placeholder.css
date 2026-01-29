@@ -1,0 +1,14 @@
+.placeholder {
+  display: contents;
+}
+ 
+.placeholder div {
+  background: rgba(245, 245, 245, 0.377);
+  width: 100%;
+  height: 10px;
+  margin-bottom: 4px;
+}
+ 
+.placeholder div:last-child {
+  margin-bottom: 0;
+}
