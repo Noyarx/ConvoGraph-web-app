@@ -100,7 +100,11 @@ export default function GraphEditor() {
 
   const handleOnConnectEnd = useCallback(
     (evt: any, connectionState: FinalConnectionState) => {
-      if (connectionState.isValid) return;
+      if (
+        connectionState.isValid ||
+        connectionState.fromHandle?.type === "target"
+      )
+        return;
       const evtPos = { x: evt.clientX, y: evt.clientY };
       const sourceNode = connectionState.fromNode as Node;
       const sourceHandle = connectionState?.fromHandle?.id ?? undefined;
