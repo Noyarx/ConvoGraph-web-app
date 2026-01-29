@@ -1,11 +1,14 @@
-import { Handle, Position, type Node } from "@xyflow/react";
 import Chip from "@mui/material/Chip";
+import { Handle, Position, useStore, type Node } from "@xyflow/react";
 import type { ConditionalNode } from "../../models/NodeTypes.model";
+import "./placeholder.css";
 
 export const bgColor = "#fc7bdbff";
 
 function ConditionalNodeComponent(flowNode: Pick<Node, "data">) {
   const node = flowNode.data as any as ConditionalNode;
+  const zoom = useStore((state) => state.transform[2]);
+  const nodo = flowNode as Node;
   return (
     <div
       className="flex flex-col gap-1 rounded-lg p-4 break-words max-w-[330px] min-w-[200px] text-white"
@@ -33,8 +36,8 @@ function ConditionalNodeComponent(flowNode: Pick<Node, "data">) {
                 node.data.value === "true"
                   ? "success"
                   : node.data.value === "false"
-                  ? "error"
-                  : "default"
+                    ? "error"
+                    : "default"
               }
               label={node.data.value}
             />
@@ -65,27 +68,58 @@ function ConditionalNodeComponent(flowNode: Pick<Node, "data">) {
       />
       <Handle
         style={{
-          width: 16,
-          height: 16,
-          backgroundColor: "darkorange",
+          // width: 16,
+          // height: 16,
+          // backgroundColor: "darkorange",
+          border: "none",
+          background: "#ea580c",
         }}
         type="source"
         id={"left"}
         position={Position.Left}
-      />
+      >
+        <div
+          style={{
+            display: nodo.selected ? "inherit" : "none",
+            width: 5,
+            height: 5,
+            transform: `scale(${3 / zoom})`,
+            fontSize: "1em",
+            left: -20,
+            top: 0,
+            position: "absolute",
+          }}
+          className={`rounded-2xl !bg-orange-600 border border-orange-300 `}
+        ></div>
+      </Handle>
       <Handle
         style={{
-          width: 16,
-          height: 16,
-          backgroundColor: "darkorange",
+          // width: 16,
+          // height: 16,
+          // backgroundColor: "darkorange",
+          background: "#ea580c",
+          border: "none",
         }}
         type="source"
         id={"right"}
         position={Position.Right}
-      />
+      >
+        <div
+          style={{
+            display: nodo.selected ? "inherit" : "none",
+            width: 5,
+            height: 5,
+            transform: `scale(${3 / zoom})`,
+            fontSize: "1em",
+            left: +20,
+            top: 0,
+            position: "absolute",
+          }}
+          className={`rounded-2xl !bg-orange-600 border border-orange-300 `}
+        ></div>
+      </Handle>
     </div>
   );
-  return <></>;
 }
 
 export default ConditionalNodeComponent;
