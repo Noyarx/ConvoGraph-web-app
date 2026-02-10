@@ -6,14 +6,18 @@ import {
   sourceHandleStyle,
   targetHandleStyle,
 } from "./util";
+import { memo, useMemo } from "react";
 
 export const bgColor = "#4e73df";
-
 function StatementNodeComponent(flowNode: Pick<Node, "data">) {
   const node = flowNode.data as any as StatementNode;
   const nodo = flowNode as Node;
   const zoom = useStore((state) => state.transform[2]);
   const scale = getInverseScale(zoom);
+  const showHandles = useMemo(
+    () => zoom >= 0.25 && nodo.selected,
+    [zoom, nodo.selected],
+  );
 
   return (
     <>
@@ -37,15 +41,28 @@ function StatementNodeComponent(flowNode: Pick<Node, "data">) {
         <div
           style={{
             position: "absolute",
-            top: -30,
-            width: 20,
-            height: 20,
-            display: nodo.selected ? "block" : "none",
+            display: showHandles ? "flex" : "none",
+            justifyContent: "center",
+            alignItems: "center",
+            top: -50,
+            left: -13,
+            width: 30,
+            height: 30,
             scale: scale,
             transform: `translateY(${-HANDLE_OFFSET * scale}px)`,
           }}
-          className={`justify-self-center active:hidden rounded-xl border-4 hover:border-2 border-green-300 bg-green-600`}
-        ></div>
+          className="group hover:!scale-150 hover:-translate-y-1.5"
+        >
+          <div
+            style={{
+              position: "absolute",
+              borderRadius: 9999,
+              width: 20,
+              height: 20,
+            }}
+            className={`active:hidden border-4 group-hover:border-2 border-green-300 bg-green-600`}
+          ></div>
+        </div>
       </Handle>
 
       <Handle
@@ -56,18 +73,31 @@ function StatementNodeComponent(flowNode: Pick<Node, "data">) {
         <div
           style={{
             position: "absolute",
+            display: showHandles ? "flex" : "none",
+            justifyContent: "center",
+            alignItems: "center",
             top: 20,
-            width: 20,
-            height: 20,
-            display: nodo.selected ? "block" : "none",
+            left: -13,
+            width: 30,
+            height: 30,
             scale: scale,
             transform: `translateY(${HANDLE_OFFSET * scale}px)`,
           }}
-          className={`justify-self-center active:hidden rounded-xl border-4 hover:border-2 border-orange-300 bg-orange-500`}
-        ></div>
+          className="group hover:!scale-150 hover:translate-y-1.5"
+        >
+          <div
+            style={{
+              position: "absolute",
+              borderRadius: 9999,
+              width: 20,
+              height: 20,
+            }}
+            className={`active:hidden border-4 group-hover:border-2 border-orange-300 bg-orange-500`}
+          ></div>
+        </div>
       </Handle>
     </>
   );
 }
 
-export default StatementNodeComponent;
+export default memo(StatementNodeComponent);
