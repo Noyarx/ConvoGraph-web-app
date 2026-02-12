@@ -1,12 +1,13 @@
 import { Handle, Position, useStore, type Node } from "@xyflow/react";
+import { useMemo } from "react";
 import type { QuestionNode } from "../../models/NodeTypes.model";
+import { Placeholder } from "./placeholderComponent";
 import {
   getInverseScale,
   HANDLE_OFFSET,
   sourceHandleStyle,
   targetHandleStyle,
 } from "./util";
-import { useMemo } from "react";
 
 export const bgColor = "#2db4a2ff";
 
@@ -14,10 +15,11 @@ function QuestionNodeComponent(flowNode: Pick<Node, "data">) {
   const node = flowNode.data as any as QuestionNode;
   const nodo = flowNode as Node;
   const zoom = useStore((state) => state.transform[2]);
-  const scale = getInverseScale(zoom);
+  const zoomedIn = useMemo(() => zoom >= 0.3, [zoom]);
+  const scale = useMemo(() => getInverseScale(zoom), [zoom]);
   const showHandles = useMemo(
-    () => zoom >= 0.25 && nodo.selected,
-    [zoom, nodo.selected],
+    () => zoomedIn && nodo.selected,
+    [zoomedIn, nodo.selected],
   );
 
   return (
@@ -27,73 +29,83 @@ function QuestionNodeComponent(flowNode: Pick<Node, "data">) {
         backgroundColor: node.node_info.color || bgColor,
       }}
     >
-      <div className="flex flex-row justify-between">
-        <span>
-          <strong>{node.data.speaker}</strong>:
-        </span>
-        <span>
-          <strong>{node.data.mood}</strong>
-        </span>
-      </div>
-      <p>{node.data.text}</p>
+      {zoomedIn ? (
+        <div>
+          <div className="flex flex-row justify-between">
+            <span>
+              <strong>{node.data.speaker}</strong>:
+            </span>
+            <span>
+              <strong>{node.data.mood}</strong>
+            </span>
+          </div>
+          <p>{node.data.text}</p>
+        </div>
+      ) : (
+        <Placeholder />
+      )}
 
       <Handle style={targetHandleStyle} type="target" position={Position.Top}>
-        <div
-          style={{
-            position: "absolute",
-            display: showHandles ? "flex" : "none",
-            justifyContent: "center",
-            alignItems: "center",
-            top: -50,
-            left: -13,
-            width: 30,
-            height: 30,
-            scale: scale,
-            transform: `translateY(${-HANDLE_OFFSET * scale}px)`,
-          }}
-          className="group hover:!scale-150 hover:-translate-y-1.5"
-        >
+        {showHandles && (
           <div
             style={{
               position: "absolute",
-              borderRadius: 9999,
-              width: 20,
-              height: 20,
+              display: showHandles ? "flex" : "none",
+              justifyContent: "center",
+              alignItems: "center",
+              top: -50,
+              left: -13,
+              width: 30,
+              height: 30,
+              scale: scale,
+              transform: `translateY(${-HANDLE_OFFSET * scale}px)`,
             }}
-            className={`active:hidden border-4 group-hover:border-2 border-green-300 bg-green-600`}
-          ></div>
-        </div>
+            className="group hover:!scale-150 hover:-translate-y-1.5"
+          >
+            <div
+              style={{
+                position: "absolute",
+                borderRadius: 9999,
+                width: 20,
+                height: 20,
+              }}
+              className={`active:hidden border-4 group-hover:border-2 border-green-300 bg-green-600`}
+            ></div>
+          </div>
+        )}
       </Handle>
       <Handle
         style={sourceHandleStyle}
         type="source"
         position={Position.Bottom}
       >
-        <div
-          style={{
-            position: "absolute",
-            display: showHandles ? "flex" : "none",
-            justifyContent: "center",
-            alignItems: "center",
-            top: 20,
-            left: -13,
-            width: 30,
-            height: 30,
-            scale: scale,
-            transform: `translateY(${HANDLE_OFFSET * scale}px)`,
-          }}
-          className="group hover:!scale-150 hover:translate-y-1.5"
-        >
+        {showHandles && (
           <div
             style={{
               position: "absolute",
-              borderRadius: 9999,
-              width: 20,
-              height: 20,
+              display: showHandles ? "flex" : "none",
+              justifyContent: "center",
+              alignItems: "center",
+              top: 20,
+              left: -13,
+              width: 30,
+              height: 30,
+              scale: scale,
+              transform: `translateY(${HANDLE_OFFSET * scale}px)`,
             }}
-            className={`active:hidden border-4 group-hover:border-2 border-orange-300 bg-orange-500`}
-          ></div>
-        </div>
+            className="group hover:!scale-150 hover:translate-y-1.5"
+          >
+            <div
+              style={{
+                position: "absolute",
+                borderRadius: 9999,
+                width: 20,
+                height: 20,
+              }}
+              className={`active:hidden border-4 group-hover:border-2 border-orange-300 bg-orange-500`}
+            ></div>
+          </div>
+        )}
       </Handle>
     </div>
   );

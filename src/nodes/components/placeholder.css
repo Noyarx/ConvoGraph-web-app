@@ -1,14 +1,30 @@
 .placeholder {
   display: contents;
 }
- 
+
 .placeholder div {
-  background: rgba(245, 245, 245, 0.377);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   width: 100%;
   height: 10px;
   margin-bottom: 4px;
 }
- 
-.placeholder div:last-child {
-  margin-bottom: 0;
+
+.placeholder span:first-child {
+  height: 8px;
+  width: 85%;
+  opacity: 0.6;
+  border-radius: 20px;
+  margin-bottom: 2px;
+}
+
+.placeholder span {
+  height: 6px;
+  background-color: white;
+  width: 95%;
+  opacity: 0.4;
+}
+.placeholder span:last-child {
+  width: 90%;
 }

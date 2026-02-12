@@ -1,7 +1,7 @@
 export const Placeholder = () => (
   <div className="placeholder">
-    <div />
-    <div />
-    <div />
+    <span></span>
+    <span></span>
+    <span></span>
   </div>
 );
