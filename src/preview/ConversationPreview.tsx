@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Edge, Node } from "@xyflow/react";
-import { Close } from "@mui/icons-material";
+import { Close, Fullscreen, FullscreenExit } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
 import { flowToGraphTree } from "../nodes/utils/xyflowAdapter";
 import type { GraphNode } from "../models/NodeTypes.model";
@@ -10,7 +10,10 @@ interface ConversationPreviewProps {
   nodes: Node[];
   edges: Edge[];
   startNodeId: string | null;
+  fullscreen: boolean;
   onClose: () => void;
+  onToggleFullscreen: () => void;
+  onHighlightChange: (visited: Set<string>, current: string | null) => void;
 }
 
 type ChatEntry =
@@ -137,7 +140,10 @@ export default function ConversationPreview({
   nodes,
   edges,
   startNodeId,
+  fullscreen,
   onClose,
+  onToggleFullscreen,
+  onHighlightChange,
 }: ConversationPreviewProps) {
   const { nodeMap, startId } = useMemo(() => {
     const graphNodes = flowToGraphTree(nodes, edges);
@@ -169,6 +175,21 @@ export default function ConversationPreview({
   const scrollRef = useRef<HTMLDivElement>(null);
   const eventTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Notify parent of highlight changes whenever chatLog changes
+  useEffect(() => {
+    const visited = new Set<string>();
+    let current: string | null = null;
+    for (let i = 0; i < chatLog.length; i++) {
+      const entry = chatLog[i];
+      if (i < chatLog.length - 1) {
+        visited.add(entry.nodeId);
+      } else {
+        current = entry.nodeId;
+      }
+    }
+    onHighlightChange(visited, current);
+  }, [chatLog, onHighlightChange]);
+
   // Scroll to bottom when chat grows
   useEffect(() => {
     if (scrollRef.current) {
@@ -186,7 +207,6 @@ export default function ConversationPreview({
         return;
       }
       const node = nodeMap.get(nodeId)!;
-      // Skip comments
       if (node.type === "comment") {
         setFinished(true);
         return;
@@ -197,7 +217,6 @@ export default function ConversationPreview({
         return;
       }
       setChatLog((prev) => [...prev, entry]);
-      // If this node has no outgoing connections, finish immediately
       if (!checkHasNext(node, nodeMap)) {
         setFinished(true);
       }
@@ -237,7 +256,6 @@ export default function ConversationPreview({
         updated[entryIndex] = { ...entry, selectedIndex: choiceIndex };
         return updated;
       });
-      // Find the choice and advance
       const entry = chatLog[entryIndex];
       if (entry.type === "question") {
         const choice = entry.choices.find((c) => c.index === choiceIndex);
@@ -256,7 +274,6 @@ export default function ConversationPreview({
       const choice = entry.choices.find((c) => c.index === choiceIndex);
       if (!choice) return;
 
-      // Truncate chat to this question, update its selection
       setChatLog((prev) => {
         const truncated = prev.slice(0, entryIndex + 1);
         truncated[entryIndex] = {
@@ -340,12 +357,10 @@ export default function ConversationPreview({
   return (
     <div
       style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 50,
-        backgroundColor: "#0f172a",
         display: "flex",
         flexDirection: "column",
+        height: "100%",
+        backgroundColor: "#0f172a",
       }}
     >
       {/* Header bar */}
@@ -354,16 +369,22 @@ export default function ConversationPreview({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "12px 20px",
+          padding: "10px 14px",
           borderBottom: "1px solid #1e293b",
+          flexShrink: 0,
         }}
       >
-        <span style={{ color: "#94a3b8", fontSize: 14, fontWeight: 600 }}>
-          Conversation Preview
+        <span style={{ color: "#94a3b8", fontSize: 13, fontWeight: 600 }}>
+          Preview
         </span>
-        <IconButton onClick={onClose} style={{ color: "#94a3b8" }} size="small">
-          <Close fontSize="small" />
-        </IconButton>
+        <div style={{ display: "flex", gap: 2 }}>
+          <IconButton onClick={onToggleFullscreen} style={{ color: "#94a3b8" }} size="small">
+            {fullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
+          </IconButton>
+          <IconButton onClick={onClose} style={{ color: "#94a3b8" }} size="small">
+            <Close fontSize="small" />
+          </IconButton>
+        </div>
       </div>
 
       {/* Chat area */}
@@ -375,10 +396,11 @@ export default function ConversationPreview({
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          padding: "24px 16px",
+          padding: fullscreen ? "24px 16px" : "16px 10px",
+          transition: "padding 0.3s ease",
         }}
       >
-        <div style={{ maxWidth: 640, width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ width: "100%", maxWidth: 640, display: "flex", flexDirection: "column", gap: 10 }}>
           {chatLog.map((entry, i) => (
             <div
               key={`${entry.nodeId}-${i}`}
@@ -418,23 +440,23 @@ export default function ConversationPreview({
             <div
               style={{
                 textAlign: "center",
-                padding: "32px 0 16px",
+                padding: "24px 0 12px",
                 animation: "fadeSlideIn 0.25s ease-out",
               }}
             >
-              <p style={{ fontSize: 16, color: "#64748b", marginBottom: 16 }}>
+              <p style={{ fontSize: 14, color: "#64748b", marginBottom: 12 }}>
                 End of conversation
               </p>
               <button
                 onClick={onClose}
                 style={{
-                  padding: "8px 28px",
+                  padding: "6px 22px",
                   borderRadius: 8,
                   backgroundColor: "#334155",
                   color: "#f1f5f9",
                   border: "1px solid #475569",
                   cursor: "pointer",
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: 600,
                 }}
               >
@@ -448,12 +470,13 @@ export default function ConversationPreview({
       {/* Keyboard hints */}
       <div
         style={{
-          padding: "8px 20px",
+          padding: "6px 14px",
           borderTop: "1px solid #1e293b",
           textAlign: "center",
+          flexShrink: 0,
         }}
       >
-        <span style={{ fontSize: 12, color: "#475569" }}>
+        <span style={{ fontSize: 11, color: "#475569" }}>
           <strong>Enter</strong> continue · <strong>Esc</strong> close
         </span>
       </div>
@@ -484,15 +507,15 @@ function DialogueBubble({
       style={{
         backgroundColor: "#1e293b",
         border: "1px solid #334155",
-        borderRadius: 12,
-        padding: "14px 18px",
+        borderRadius: 10,
+        padding: "10px 14px",
         display: "flex",
         flexDirection: "column",
-        gap: 8,
+        gap: 6,
       }}
     >
       <SpeakerHeader speaker={entry.speaker} mood={entry.mood} color={entry.color} />
-      <p style={{ fontSize: 15, color: "#e2e8f0", lineHeight: 1.65, margin: 0 }}>
+      <p style={{ fontSize: 13, color: "#e2e8f0", lineHeight: 1.6, margin: 0 }}>
         {entry.text}
       </p>
       {isLast && (
@@ -500,15 +523,15 @@ function DialogueBubble({
           onClick={onContinue}
           style={{
             alignSelf: "flex-end",
-            padding: "6px 18px",
+            padding: "5px 14px",
             borderRadius: 6,
             backgroundColor: "#334155",
             color: "#cbd5e1",
             border: "1px solid #475569",
             cursor: "pointer",
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: 600,
-            marginTop: 4,
+            marginTop: 2,
           }}
         >
           Continue ↵
@@ -536,18 +559,18 @@ function QuestionBubble({
       style={{
         backgroundColor: "#1e293b",
         border: "1px solid #334155",
-        borderRadius: 12,
-        padding: "14px 18px",
+        borderRadius: 10,
+        padding: "10px 14px",
         display: "flex",
         flexDirection: "column",
-        gap: 8,
+        gap: 6,
       }}
     >
       <SpeakerHeader speaker={entry.speaker} mood={entry.mood} color={entry.color} />
-      <p style={{ fontSize: 15, color: "#e2e8f0", lineHeight: 1.65, margin: 0 }}>
+      <p style={{ fontSize: 13, color: "#e2e8f0", lineHeight: 1.6, margin: 0 }}>
         {entry.text}
       </p>
-      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 6 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 5, marginTop: 4 }}>
         {entry.choices.map((choice) => {
           const isSelected = entry.selectedIndex === choice.index;
           const isUnselectedAfterAnswer = answered && !isSelected;
@@ -567,7 +590,6 @@ function QuestionBubble({
               bg = "rgba(255,255,255,0.1)";
               cursor = "default";
             } else {
-              // Unselected but rewindable
               opacity = 0.5;
               borderStyle = "dashed";
               cursor = "pointer";
@@ -587,14 +609,14 @@ function QuestionBubble({
               key={choice.index}
               onClick={handleClick}
               style={{
-                padding: "9px 14px",
-                borderRadius: 8,
+                padding: "7px 12px",
+                borderRadius: 7,
                 border: `1px ${borderStyle} ${borderColor}`,
                 borderWidth: isSelected ? 2 : 1,
                 backgroundColor: bg,
                 color: "#e2e8f0",
                 cursor,
-                fontSize: 14,
+                fontSize: 13,
                 opacity,
                 transition: "opacity 0.2s, background-color 0.15s, border-width 0.15s",
               }}
@@ -610,9 +632,7 @@ function QuestionBubble({
               }}
               onMouseLeave={(e) => {
                 if ((!answered && isLast) || isUnselectedAfterAnswer) {
-                  e.currentTarget.style.backgroundColor = isUnselectedAfterAnswer
-                    ? "rgba(255,255,255,0.04)"
-                    : "rgba(255,255,255,0.04)";
+                  e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)";
                   if (isUnselectedAfterAnswer) {
                     e.currentTarget.style.opacity = "0.5";
                   }
@@ -654,19 +674,16 @@ function ConditionBubble({
     let opacity: number;
 
     if (!answered) {
-      // Active state — not yet selected
       bg = `rgba(${baseColor},0.1)`;
       borderOpacity = "0.25";
       cursor = "pointer";
       opacity = 1;
     } else if (isSelected) {
-      // Selected state — not clickable
       bg = `rgba(${baseColor},0.25)`;
       borderOpacity = "0.5";
       cursor = "default";
       opacity = 1;
     } else {
-      // Unselected after answer — rewindable
       bg = `rgba(${baseColor},0.1)`;
       borderOpacity = "0.25";
       borderStyle = "dashed";
@@ -687,14 +704,14 @@ function ConditionBubble({
         key={branch}
         onClick={handleClick}
         style={{
-          padding: "8px 28px",
-          borderRadius: 8,
+          padding: "6px 20px",
+          borderRadius: 7,
           backgroundColor: bg,
           color: textColor,
           border: `1px ${borderStyle} rgba(${baseColor},${borderOpacity})`,
           borderWidth: isSelected ? 2 : 1,
           cursor,
-          fontSize: 14,
+          fontSize: 13,
           fontWeight: 600,
           opacity,
           transition: "opacity 0.2s, background-color 0.15s, border-width 0.15s",
@@ -729,13 +746,13 @@ function ConditionBubble({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: 10,
-        padding: "16px 0",
+        gap: 8,
+        padding: "12px 0",
       }}
     >
       <span
         style={{
-          fontSize: 11,
+          fontSize: 10,
           color: "#64748b",
           textTransform: "uppercase",
           letterSpacing: 1.5,
@@ -747,20 +764,20 @@ function ConditionBubble({
       <div
         style={{
           display: "flex",
-          gap: 8,
+          gap: 6,
           alignItems: "center",
-          padding: "6px 14px",
-          borderRadius: 8,
+          padding: "5px 12px",
+          borderRadius: 7,
           backgroundColor: "rgba(252,123,219,0.12)",
           border: "1px solid rgba(252,123,219,0.25)",
-          fontSize: 14,
+          fontSize: 12,
         }}
       >
         <span style={{ color: "#e2e8f0", fontWeight: 600 }}>{entry.varName}</span>
         <span style={{ color: "#94a3b8" }}>{entry.operator}</span>
         <span style={{ color: "#e2e8f0", fontWeight: 600 }}>{entry.value}</span>
       </div>
-      <div style={{ display: "flex", gap: 12 }}>
+      <div style={{ display: "flex", gap: 10 }}>
         {renderBranchButton("true")}
         {renderBranchButton("false")}
       </div>
@@ -778,24 +795,24 @@ function EventBubble({
       style={{
         display: "flex",
         justifyContent: "center",
-        padding: "8px 0",
+        padding: "6px 0",
       }}
     >
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 8,
-          padding: "5px 14px",
-          borderRadius: 20,
+          gap: 6,
+          padding: "4px 12px",
+          borderRadius: 16,
           backgroundColor: "rgba(255,165,0,0.1)",
           border: "1px solid rgba(255,165,0,0.2)",
-          fontSize: 13,
+          fontSize: 12,
           color: "#FFA500",
           fontWeight: 500,
         }}
       >
-        <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#94a3b8" }}>
+        <span style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: "#94a3b8" }}>
           Event
         </span>
         {entry.eventName}
@@ -814,14 +831,14 @@ function SpeakerHeader({
   color: string;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      <span style={{ fontSize: 15, fontWeight: 700, color }}>{speaker}</span>
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <span style={{ fontSize: 13, fontWeight: 700, color }}>{speaker}</span>
       {mood && (
         <span
           style={{
-            fontSize: 11,
-            padding: "1px 8px",
-            borderRadius: 10,
+            fontSize: 10,
+            padding: "1px 6px",
+            borderRadius: 8,
             backgroundColor: "rgba(255,255,255,0.08)",
             color: "#94a3b8",
           }}
