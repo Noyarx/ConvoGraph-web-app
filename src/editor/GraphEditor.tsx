@@ -34,6 +34,7 @@ import ConditionalNodeComponent from "../nodes/components/ConditionalNodeCompone
 import EventNodeComponent from "../nodes/components/EventNodeComponent";
 import QuestionNodeComponent from "../nodes/components/QuestionNodeComponent";
 import StatementNodeComponent from "../nodes/components/StatementNodeComponent";
+import ConversationPreview from "../preview/ConversationPreview";
 import SideBar from "../sidebar/components/Sidebar";
 import FloatingToolbar from "../toolbar/components/FloatingToolbar";
 import { useGraphActions } from "./UseGraphActions";
@@ -68,6 +69,7 @@ export default function GraphEditor() {
     null,
   );
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const [previewOpen, setPreviewOpen] = useState<boolean>(false);
   const [contextMenu, setContextMenu] = useState({
     open: false,
     position: { x: 0, y: 0 },
@@ -231,6 +233,14 @@ export default function GraphEditor() {
 
   const handleClose = () => setContextMenu((m) => ({ ...m, open: false }));
 
+  const handleOpenPreview = useCallback(() => {
+    if (flowNodes.length < 1) {
+      alert("⚠️ There are no nodes to preview!");
+      return;
+    }
+    setPreviewOpen(true);
+  }, [flowNodes]);
+
   //#region SAVE/RESTORE STATE
 
   useEffect(() => {
@@ -282,7 +292,7 @@ export default function GraphEditor() {
         fitView
       >
         <Panel className="flex flex-row">
-          <Header />
+          <Header onPreview={handleOpenPreview} />
         </Panel>
         <Panel
           position="bottom-left"
@@ -332,7 +342,20 @@ export default function GraphEditor() {
         onClose={handleSidebarClose}
         onSaveNode={handleSaveNode}
         onSaveEdge={handleSaveEdge}
+        onPreview={handleOpenPreview}
       />
+      {previewOpen && (
+        <ConversationPreview
+          nodes={flowNodes}
+          edges={edges}
+          startNodeId={
+            editingElement && !("source" in editingElement)
+              ? editingElement.id
+              : null
+          }
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
     </div>
   );
   //#endregion
