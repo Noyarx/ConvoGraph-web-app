@@ -172,6 +172,7 @@ export function useGraphActions(): GraphActions {
         },
         data: {
           ...node.data,
+          id: newId,
           node_info: node.data.node_info,
           data: node.data.data,
         },
@@ -186,20 +187,24 @@ export function useGraphActions(): GraphActions {
     (nodes: Node[]) => {
       // const selected = getNodes().filter((n) => n.selected === true);
 
-      const newNodes: Node[] = nodes.map((node) => ({
-        ...node,
-        selected: false,
-        id: uuidv4(),
-        position: {
-          x: node.position.x + offset.x,
-          y: node.position.y + offset.y,
-        },
-        data: {
-          ...node.data,
-          node_info: node.data.node_info,
-          data: node.data.data,
-        },
-      }));
+      const newNodes: Node[] = nodes.map((node) => {
+        const newId = uuidv4();
+        return {
+          ...node,
+          selected: false,
+          id: newId,
+          position: {
+            x: node.position.x + offset.x,
+            y: node.position.y + offset.y,
+          },
+          data: {
+            ...node.data,
+            id: newId,
+            node_info: node.data.node_info,
+            data: node.data.data,
+          },
+        };
+      });
       flowHistory.saveState();
       addNodes(newNodes);
     },

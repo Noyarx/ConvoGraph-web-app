@@ -259,6 +259,7 @@ function GraphEditorInner() {
   const handleClosePreview = useCallback(() => {
     setPreviewOpen(false);
     setPreviewFullscreen(false);
+    setEditingElement(null);
     previewCtx.deactivate();
   }, []);
 

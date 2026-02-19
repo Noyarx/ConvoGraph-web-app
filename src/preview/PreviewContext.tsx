@@ -37,7 +37,7 @@ export function PreviewProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const activate = useCallback(() => {
-    setState((prev) => ({ ...prev, active: true }));
+    setState({ visitedNodeIds: new Set(), currentNodeId: null, active: true });
   }, []);
 
   const deactivate = useCallback(() => {
