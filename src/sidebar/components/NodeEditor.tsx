@@ -42,7 +42,7 @@ function NodeEditor({ node, onChange }: NodeEditorProps) {
     );
   }
 
-  const { speakers, moods, addSpeaker, addMood } =
+  const { speakers, addSpeaker, getMoodsForSpeaker, addMoodToSpeaker } =
     context as CharacterDataContextType;
 
   // update editor field values on node selected change
@@ -99,8 +99,9 @@ function NodeEditor({ node, onChange }: NodeEditorProps) {
                   {renderSelectField({
                     value: data.mood || "",
                     onChange: (val) => handleChange("mood", val),
-                    items: moods,
-                    onAdd: addMood,
+                    items: getMoodsForSpeaker(data.speaker || ""),
+                    onAdd: (label) =>
+                      addMoodToSpeaker(data.speaker || "", label),
                     placeholder: "Mood",
                   } as AddableSelectProps)}
                 </Stack>

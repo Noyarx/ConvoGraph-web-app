@@ -1,19 +1,23 @@
 import { Button } from "@material-tailwind/react";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
+import PeopleOutlineRoundedIcon from "@mui/icons-material/PeopleOutlineRounded";
 import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
 import { useReactFlow } from "@xyflow/react";
+import { useState } from "react";
+import CharactersPanel from "../../characters/components/CharactersPanel";
 import { exportTimelineToJSON } from "../../export/JsonExport";
 import { importTimelineFromJSON } from "../../import/JsonImport";
+import { useFlowHistory } from "../../flow-history/FlowHistoryContext";
 import {
   flowToGraphTree,
   toXYFlowEdges,
   toXYFlowNodes,
 } from "../../nodes/utils/xyflowAdapter";
-import { useFlowHistory } from "../../flow-history/FlowHistoryContext";
 
 function Header() {
   const flowHistory = useFlowHistory();
   const { getNodes, getEdges, setNodes, setEdges } = useReactFlow();
+  const [charactersPanelOpen, setCharactersPanelOpen] = useState(false);
 
   const handleExport = () => {
     const graphNodes = flowToGraphTree(getNodes(), getEdges());
@@ -50,6 +54,21 @@ function Header() {
               className="flex flex-row p-2 gap-2 justify-between"
               type="button"
               variant="solid"
+              onClick={() => setCharactersPanelOpen(true)}
+            >
+              <p>
+                <strong>Characters</strong>
+              </p>
+              <PeopleOutlineRoundedIcon />
+            </Button>
+            <Button
+              style={{
+                transitionProperty: "background-color color",
+                transitionDuration: "0.2s",
+              }}
+              className="flex flex-row p-2 gap-2 justify-between"
+              type="button"
+              variant="solid"
               onClick={handleImport}
             >
               <p>
@@ -73,6 +92,10 @@ function Header() {
               <FileDownloadOutlinedIcon />
             </Button>
           </div>
+          <CharactersPanel
+            open={charactersPanelOpen}
+            onClose={() => setCharactersPanelOpen(false)}
+          />
         </div>
       </div>
     </div>

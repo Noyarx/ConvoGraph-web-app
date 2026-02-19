@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+ANALISI_PROGETTO.md
+.claude/settings.local.json
+.gitignore

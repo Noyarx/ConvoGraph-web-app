@@ -1,38 +1,64 @@
-import { createContext, useContext, useState } from "react";
-import { initialMoods, initialSpeakers, type SelectItem } from "./SelectItems";
+import { createContext, useCallback, useContext, useMemo } from "react";
+import { useCharacters } from "../../characters/CharactersContext";
+import type { SelectItem } from "./SelectItems";
 
 export interface CharacterDataContextType {
   speakers: SelectItem[];
-  moods: SelectItem[];
   addSpeaker: (label: string | null) => void;
-  addMood: (label: string | null) => void;
+  getMoodsForSpeaker: (speakerName: string) => SelectItem[];
+  addMoodToSpeaker: (speakerName: string, mood: string) => void;
 }
 
 const CharacterDataContext = createContext<CharacterDataContextType | null>(
-  null
+  null,
 );
 
-export function CharacterDataProvider({ children }: any) {
-  const [speakers, setSpeakers] = useState<SelectItem[]>(initialSpeakers);
-  const [moods, setMoods] = useState<SelectItem[]>(initialMoods);
+export function CharacterDataProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { characters, addCharacter, addMoodToCharacter } = useCharacters();
 
-  const addSpeaker = (label: string | null) => {
-    if (!label) return;
+  const speakers = useMemo<SelectItem[]>(
+    () => characters.map((c) => ({ label: c.name, value: c.name })),
+    [characters],
+  );
 
-    const value = label.toLowerCase().replace(/\s+/g, "_");
-    setSpeakers((prev) => [...prev, { label, value }]);
-  };
+  const addSpeaker = useCallback(
+    (label: string | null) => {
+      if (!label) return;
+      const alreadyExists = characters.some(
+        (c) => c.name.toLowerCase() === label.toLowerCase(),
+      );
+      if (!alreadyExists) addCharacter(label, "");
+    },
+    [characters, addCharacter],
+  );
 
-  const addMood = (label: string | null) => {
-    if (!label) return;
+  const getMoodsForSpeaker = useCallback(
+    (speakerName: string): SelectItem[] => {
+      const char = characters.find((c) => c.name === speakerName);
+      if (!char) return [];
+      return char.moods.map((m) => ({
+        label: m,
+        value: m.toLowerCase().replace(/\s+/g, "_"),
+      }));
+    },
+    [characters],
+  );
 
-    const value = label.toLowerCase().replace(/\s+/g, "_");
-    setMoods((prev) => [...prev, { label, value }]);
-  };
+  const addMoodToSpeaker = useCallback(
+    (speakerName: string, mood: string) => {
+      const char = characters.find((c) => c.name === speakerName);
+      if (char) addMoodToCharacter(char.id, mood);
+    },
+    [characters, addMoodToCharacter],
+  );
 
   return (
     <CharacterDataContext.Provider
-      value={{ speakers, moods, addSpeaker, addMood }}
+      value={{ speakers, addSpeaker, getMoodsForSpeaker, addMoodToSpeaker }}
     >
       {children}
     </CharacterDataContext.Provider>
