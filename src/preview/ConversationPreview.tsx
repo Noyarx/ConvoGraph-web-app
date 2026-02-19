@@ -6,6 +6,13 @@ import { flowToGraphTree } from "../nodes/utils/xyflowAdapter";
 import type { GraphNode } from "../models/NodeTypes.model";
 import type { DialogueChoice } from "../models/DialogueChoice.model";
 
+/* ── Theme constants ── */
+
+export const PREVIEW_BG = "#0f172a";
+export const PREVIEW_BORDER = "#1e293b";
+
+/* ── Types ── */
+
 interface ConversationPreviewProps {
   nodes: Node[];
   edges: Edge[];
@@ -51,6 +58,8 @@ type ChatEntry =
       nodeId: string;
       eventName: string;
     };
+
+/* ── Pure helpers ── */
 
 function findRootNode(graphNodes: GraphNode[]): GraphNode | undefined {
   const referencedIds = new Set<string>();
@@ -136,6 +145,8 @@ function nodeToEntry(node: GraphNode): ChatEntry | null {
   }
 }
 
+/* ── Main component ── */
+
 export default function ConversationPreview({
   nodes,
   edges,
@@ -174,6 +185,7 @@ export default function ConversationPreview({
   const [finished, setFinished] = useState(initialState.done);
   const scrollRef = useRef<HTMLDivElement>(null);
   const eventTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const advancePendingRef = useRef(false);
 
   // Notify parent of highlight changes whenever chatLog changes
   useEffect(() => {
@@ -240,92 +252,48 @@ export default function ConversationPreview({
     }
   }, [chatLog, nodeMap, pushNode]);
 
-  const handleAdvanceDialogue = useCallback(
-    (entry: ChatEntry & { type: "dialogue" }) => {
-      pushNode(entry.nextNodeId || null);
+  /** Unified handler: select a choice/branch and advance after delay */
+  const handleSelect = useCallback(
+    (entryIndex: number, nextNodeId: string, patch: Partial<ChatEntry>) => {
+      if (advancePendingRef.current) return;
+      let changed = false;
+      setChatLog((prev) => {
+        const entry = prev[entryIndex];
+        if (entry.type === "question" && entry.selectedIndex !== null) return prev;
+        if (entry.type === "condition" && entry.selectedBranch !== null) return prev;
+        const updated = [...prev];
+        updated[entryIndex] = { ...entry, ...patch } as ChatEntry;
+        changed = true;
+        return updated;
+      });
+      if (changed) {
+        advancePendingRef.current = true;
+        setTimeout(() => {
+          pushNode(nextNodeId || null);
+          advancePendingRef.current = false;
+        }, 200);
+      }
     },
     [pushNode],
   );
 
-  const handleSelectChoice = useCallback(
-    (entryIndex: number, choiceIndex: number) => {
-      setChatLog((prev) => {
-        const updated = [...prev];
-        const entry = updated[entryIndex];
-        if (entry.type !== "question" || entry.selectedIndex !== null) return prev;
-        updated[entryIndex] = { ...entry, selectedIndex: choiceIndex };
-        return updated;
-      });
-      const entry = chatLog[entryIndex];
-      if (entry.type === "question") {
-        const choice = entry.choices.find((c) => c.index === choiceIndex);
-        if (choice) {
-          setTimeout(() => pushNode(choice.next_node || null), 200);
-        }
-      }
-    },
-    [chatLog, pushNode],
-  );
-
+  /** Unified handler: rewind to a previous choice/branch and re-advance */
   const handleRewind = useCallback(
-    (entryIndex: number, choiceIndex: number) => {
-      const entry = chatLog[entryIndex];
-      if (entry.type !== "question") return;
-      const choice = entry.choices.find((c) => c.index === choiceIndex);
-      if (!choice) return;
-
+    (entryIndex: number, nextNodeId: string, patch: Partial<ChatEntry>) => {
+      if (advancePendingRef.current) return;
       setChatLog((prev) => {
         const truncated = prev.slice(0, entryIndex + 1);
-        truncated[entryIndex] = {
-          ...truncated[entryIndex],
-          selectedIndex: choiceIndex,
-        } as ChatEntry & { type: "question" };
+        truncated[entryIndex] = { ...truncated[entryIndex], ...patch } as ChatEntry;
         return truncated;
       });
       setFinished(false);
-      setTimeout(() => pushNode(choice.next_node || null), 200);
+      advancePendingRef.current = true;
+      setTimeout(() => {
+        pushNode(nextNodeId || null);
+        advancePendingRef.current = false;
+      }, 200);
     },
-    [chatLog, pushNode],
-  );
-
-  const handleSelectBranch = useCallback(
-    (entryIndex: number, branch: "true" | "false") => {
-      setChatLog((prev) => {
-        const updated = [...prev];
-        const entry = updated[entryIndex];
-        if (entry.type !== "condition" || entry.selectedBranch !== null)
-          return prev;
-        updated[entryIndex] = { ...entry, selectedBranch: branch };
-        return updated;
-      });
-      const entry = chatLog[entryIndex];
-      if (entry.type === "condition") {
-        const nextId =
-          branch === "true" ? entry.nextTrue : entry.nextFalse;
-        setTimeout(() => pushNode(nextId || null), 200);
-      }
-    },
-    [chatLog, pushNode],
-  );
-
-  const handleRewindCondition = useCallback(
-    (entryIndex: number, branch: "true" | "false") => {
-      const entry = chatLog[entryIndex];
-      if (entry.type !== "condition") return;
-      const nextId = branch === "true" ? entry.nextTrue : entry.nextFalse;
-
-      setChatLog((prev) => {
-        const truncated = prev.slice(0, entryIndex + 1);
-        truncated[entryIndex] = {
-          ...truncated[entryIndex],
-          selectedBranch: branch,
-        } as ChatEntry & { type: "condition" };
-        return truncated;
-      });
-      setFinished(false);
-      setTimeout(() => pushNode(nextId || null), 200);
-    },
-    [chatLog, pushNode],
+    [pushNode],
   );
 
   // Keyboard
@@ -339,7 +307,7 @@ export default function ConversationPreview({
         const lastEntry = chatLog[chatLog.length - 1];
         if (!lastEntry) return;
         if (lastEntry.type === "dialogue") {
-          handleAdvanceDialogue(lastEntry);
+          pushNode(lastEntry.nextNodeId || null);
         }
         if (lastEntry.type === "event") {
           if (eventTimerRef.current) clearTimeout(eventTimerRef.current);
@@ -350,34 +318,19 @@ export default function ConversationPreview({
     };
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
-  }, [chatLog, nodeMap, pushNode, handleAdvanceDialogue, onClose]);
+  }, [chatLog, nodeMap, pushNode, onClose]);
 
   const isLastEntry = (i: number) => i === chatLog.length - 1;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        backgroundColor: "#0f172a",
-      }}
-    >
+    <div className="flex flex-col h-full" style={{ backgroundColor: PREVIEW_BG }}>
       {/* Header bar */}
       <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "10px 14px",
-          borderBottom: "1px solid #1e293b",
-          flexShrink: 0,
-        }}
+        className="flex items-center justify-between shrink-0"
+        style={{ padding: "10px 14px", borderBottom: `1px solid ${PREVIEW_BORDER}` }}
       >
-        <span style={{ color: "#94a3b8", fontSize: 13, fontWeight: 600 }}>
-          Preview
-        </span>
-        <div style={{ display: "flex", gap: 2 }}>
+        <span className="text-slate-400 text-[13px] font-semibold">Preview</span>
+        <div className="flex gap-0.5">
           <IconButton onClick={onToggleFullscreen} style={{ color: "#94a3b8" }} size="small">
             {fullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
           </IconButton>
@@ -390,46 +343,47 @@ export default function ConversationPreview({
       {/* Chat area */}
       <div
         ref={scrollRef}
+        className="flex-1 overflow-y-auto flex flex-col items-center"
         style={{
-          flex: 1,
-          overflowY: "auto",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
           padding: fullscreen ? "24px 16px" : "16px 10px",
           transition: "padding 0.3s ease",
         }}
       >
-        <div style={{ width: "100%", maxWidth: 640, display: "flex", flexDirection: "column", gap: 10 }}>
+        <div className="w-full max-w-[640px] flex flex-col gap-2.5">
           {chatLog.map((entry, i) => (
-            <div
-              key={`${entry.nodeId}-${i}`}
-              style={{
-                animation: "fadeSlideIn 0.25s ease-out",
-              }}
-            >
+            <div key={`${entry.nodeId}-${i}`} className="animate-fade-slide-in">
               {entry.type === "dialogue" && (
                 <DialogueBubble
                   entry={entry}
                   isLast={isLastEntry(i) && !finished}
-                  onContinue={() => handleAdvanceDialogue(entry)}
+                  onContinue={() => pushNode(entry.nextNodeId || null)}
                 />
               )}
               {entry.type === "question" && (
                 <QuestionBubble
                   entry={entry}
                   isLast={isLastEntry(i) && !finished}
-                  onSelectChoice={(choiceIdx) =>
-                    handleSelectChoice(i, choiceIdx)
-                  }
-                  onRewind={(choiceIdx) => handleRewind(i, choiceIdx)}
+                  onSelectChoice={(choiceIdx) => {
+                    const choice = entry.choices.find((c) => c.index === choiceIdx);
+                    if (choice) handleSelect(i, choice.next_node, { selectedIndex: choiceIdx });
+                  }}
+                  onRewind={(choiceIdx) => {
+                    const choice = entry.choices.find((c) => c.index === choiceIdx);
+                    if (choice) handleRewind(i, choice.next_node, { selectedIndex: choiceIdx });
+                  }}
                 />
               )}
               {entry.type === "condition" && (
                 <ConditionBubble
                   entry={entry}
-                  onSelectBranch={(branch) => handleSelectBranch(i, branch)}
-                  onRewind={(branch) => handleRewindCondition(i, branch)}
+                  onSelectBranch={(branch) => {
+                    const nextId = branch === "true" ? entry.nextTrue : entry.nextFalse;
+                    handleSelect(i, nextId, { selectedBranch: branch });
+                  }}
+                  onRewind={(branch) => {
+                    const nextId = branch === "true" ? entry.nextTrue : entry.nextFalse;
+                    handleRewind(i, nextId, { selectedBranch: branch });
+                  }}
                 />
               )}
               {entry.type === "event" && <EventBubble entry={entry} />}
@@ -437,28 +391,11 @@ export default function ConversationPreview({
           ))}
 
           {finished && (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "24px 0 12px",
-                animation: "fadeSlideIn 0.25s ease-out",
-              }}
-            >
-              <p style={{ fontSize: 14, color: "#64748b", marginBottom: 12 }}>
-                End of conversation
-              </p>
+            <div className="text-center animate-fade-slide-in" style={{ padding: "24px 0 12px" }}>
+              <p className="text-sm text-slate-500 mb-3">End of conversation</p>
               <button
                 onClick={onClose}
-                style={{
-                  padding: "6px 22px",
-                  borderRadius: 8,
-                  backgroundColor: "#334155",
-                  color: "#f1f5f9",
-                  border: "1px solid #475569",
-                  cursor: "pointer",
-                  fontSize: 13,
-                  fontWeight: 600,
-                }}
+                className="px-6 py-1.5 rounded-lg bg-slate-700 text-slate-100 border border-slate-600 cursor-pointer text-[13px] font-semibold hover:bg-slate-600 transition-colors"
               >
                 Close
               </button>
@@ -469,24 +406,13 @@ export default function ConversationPreview({
 
       {/* Keyboard hints */}
       <div
-        style={{
-          padding: "6px 14px",
-          borderTop: "1px solid #1e293b",
-          textAlign: "center",
-          flexShrink: 0,
-        }}
+        className="text-center shrink-0"
+        style={{ padding: "6px 14px", borderTop: `1px solid ${PREVIEW_BORDER}` }}
       >
-        <span style={{ fontSize: 11, color: "#475569" }}>
+        <span className="text-[11px] text-slate-600">
           <strong>Enter</strong> continue · <strong>Esc</strong> close
         </span>
       </div>
-
-      <style>{`
-        @keyframes fadeSlideIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 }
@@ -503,36 +429,13 @@ function DialogueBubble({
   onContinue: () => void;
 }) {
   return (
-    <div
-      style={{
-        backgroundColor: "#1e293b",
-        border: "1px solid #334155",
-        borderRadius: 10,
-        padding: "10px 14px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 6,
-      }}
-    >
+    <div className="flex flex-col gap-1.5 rounded-[10px] bg-slate-800 border border-slate-700 px-3.5 py-2.5">
       <SpeakerHeader speaker={entry.speaker} mood={entry.mood} color={entry.color} />
-      <p style={{ fontSize: 13, color: "#e2e8f0", lineHeight: 1.6, margin: 0 }}>
-        {entry.text}
-      </p>
+      <p className="text-[13px] text-slate-200 leading-relaxed m-0">{entry.text}</p>
       {isLast && (
         <button
           onClick={onContinue}
-          style={{
-            alignSelf: "flex-end",
-            padding: "5px 14px",
-            borderRadius: 6,
-            backgroundColor: "#334155",
-            color: "#cbd5e1",
-            border: "1px solid #475569",
-            cursor: "pointer",
-            fontSize: 12,
-            fontWeight: 600,
-            marginTop: 2,
-          }}
+          className="self-end px-3.5 py-1 rounded-md bg-slate-700 text-slate-300 border border-slate-600 cursor-pointer text-xs font-semibold mt-0.5 hover:bg-slate-600 transition-colors"
         >
           Continue ↵
         </button>
@@ -555,22 +458,10 @@ function QuestionBubble({
   const answered = entry.selectedIndex !== null;
 
   return (
-    <div
-      style={{
-        backgroundColor: "#1e293b",
-        border: "1px solid #334155",
-        borderRadius: 10,
-        padding: "10px 14px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 6,
-      }}
-    >
+    <div className="flex flex-col gap-1.5 rounded-[10px] bg-slate-800 border border-slate-700 px-3.5 py-2.5">
       <SpeakerHeader speaker={entry.speaker} mood={entry.mood} color={entry.color} />
-      <p style={{ fontSize: 13, color: "#e2e8f0", lineHeight: 1.6, margin: 0 }}>
-        {entry.text}
-      </p>
-      <div style={{ display: "flex", flexDirection: "column", gap: 5, marginTop: 4 }}>
+      <p className="text-[13px] text-slate-200 leading-relaxed m-0">{entry.text}</p>
+      <div className="flex flex-col gap-[5px] mt-1">
         {entry.choices.map((choice) => {
           const isSelected = entry.selectedIndex === choice.index;
           const isUnselectedAfterAnswer = answered && !isSelected;
@@ -586,13 +477,11 @@ function QuestionBubble({
 
           if (answered) {
             if (isSelected) {
-              opacity = 1;
               bg = "rgba(255,255,255,0.1)";
               cursor = "default";
             } else {
               opacity = 0.5;
               borderStyle = "dashed";
-              cursor = "pointer";
             }
           }
 
@@ -741,43 +630,23 @@ function ConditionBubble({
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 8,
-        padding: "12px 0",
-      }}
-    >
-      <span
-        style={{
-          fontSize: 10,
-          color: "#64748b",
-          textTransform: "uppercase",
-          letterSpacing: 1.5,
-          fontWeight: 600,
-        }}
-      >
+    <div className="flex flex-col items-center gap-2 py-3">
+      <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">
         Condition
       </span>
       <div
+        className="flex gap-1.5 items-center text-xs rounded-[7px]"
         style={{
-          display: "flex",
-          gap: 6,
-          alignItems: "center",
           padding: "5px 12px",
-          borderRadius: 7,
           backgroundColor: "rgba(252,123,219,0.12)",
           border: "1px solid rgba(252,123,219,0.25)",
-          fontSize: 12,
         }}
       >
-        <span style={{ color: "#e2e8f0", fontWeight: 600 }}>{entry.varName}</span>
-        <span style={{ color: "#94a3b8" }}>{entry.operator}</span>
-        <span style={{ color: "#e2e8f0", fontWeight: 600 }}>{entry.value}</span>
+        <span className="text-slate-200 font-semibold">{entry.varName}</span>
+        <span className="text-slate-400">{entry.operator}</span>
+        <span className="text-slate-200 font-semibold">{entry.value}</span>
       </div>
-      <div style={{ display: "flex", gap: 10 }}>
+      <div className="flex gap-2.5">
         {renderBranchButton("true")}
         {renderBranchButton("false")}
       </div>
@@ -791,30 +660,17 @@ function EventBubble({
   entry: ChatEntry & { type: "event" };
 }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        padding: "6px 0",
-      }}
-    >
+    <div className="flex justify-center py-1.5">
       <div
+        className="flex items-center gap-1.5 text-xs font-medium rounded-full"
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
           padding: "4px 12px",
-          borderRadius: 16,
           backgroundColor: "rgba(255,165,0,0.1)",
           border: "1px solid rgba(255,165,0,0.2)",
-          fontSize: 12,
           color: "#FFA500",
-          fontWeight: 500,
         }}
       >
-        <span style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: "#94a3b8" }}>
-          Event
-        </span>
+        <span className="text-[9px] uppercase tracking-wide text-slate-400">Event</span>
         {entry.eventName}
       </div>
     </div>
@@ -831,18 +687,10 @@ function SpeakerHeader({
   color: string;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <span style={{ fontSize: 13, fontWeight: 700, color }}>{speaker}</span>
+    <div className="flex items-center gap-2">
+      <span className="text-[13px] font-bold" style={{ color }}>{speaker}</span>
       {mood && (
-        <span
-          style={{
-            fontSize: 10,
-            padding: "1px 6px",
-            borderRadius: 8,
-            backgroundColor: "rgba(255,255,255,0.08)",
-            color: "#94a3b8",
-          }}
-        >
+        <span className="text-[10px] px-1.5 py-px rounded-lg bg-white/[0.08] text-slate-400">
           {mood}
         </span>
       )}

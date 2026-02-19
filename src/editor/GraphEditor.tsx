@@ -35,7 +35,7 @@ import ConditionalNodeComponent from "../nodes/components/ConditionalNodeCompone
 import EventNodeComponent from "../nodes/components/EventNodeComponent";
 import QuestionNodeComponent from "../nodes/components/QuestionNodeComponent";
 import StatementNodeComponent from "../nodes/components/StatementNodeComponent";
-import ConversationPreview from "../preview/ConversationPreview";
+import ConversationPreview, { PREVIEW_BG, PREVIEW_BORDER } from "../preview/ConversationPreview";
 import { PreviewProvider, usePreviewContext } from "../preview/PreviewContext";
 import SideBar from "../sidebar/components/Sidebar";
 import FloatingToolbar from "../toolbar/components/FloatingToolbar";
@@ -266,13 +266,6 @@ function GraphEditorInner() {
     setPreviewFullscreen((prev) => !prev);
   }, []);
 
-  const handleHighlightChange = useCallback(
-    (visited: Set<string>, current: string | null) => {
-      previewCtx.setHighlight(visited, current);
-    },
-    [],
-  );
-
   //#region SAVE/RESTORE STATE
 
   useEffect(() => {
@@ -395,8 +388,8 @@ function GraphEditorInner() {
             "& .MuiDrawer-paper": {
               width: previewFullscreen ? "100%" : PREVIEW_WIDTH,
               boxSizing: "border-box",
-              backgroundColor: "#0f172a",
-              borderLeft: previewFullscreen ? "none" : "1px solid #1e293b",
+              backgroundColor: PREVIEW_BG,
+              borderLeft: previewFullscreen ? "none" : `1px solid ${PREVIEW_BORDER}`,
               transition: "width 0.3s ease",
             },
           }}
@@ -412,7 +405,7 @@ function GraphEditorInner() {
             fullscreen={previewFullscreen}
             onClose={handleClosePreview}
             onToggleFullscreen={handleToggleFullscreen}
-            onHighlightChange={handleHighlightChange}
+            onHighlightChange={previewCtx.setHighlight}
           />
         </Drawer>
       )}

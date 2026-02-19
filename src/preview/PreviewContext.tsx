@@ -64,3 +64,9 @@ export function usePreviewHighlight(nodeId: string): HighlightState {
 export function usePreviewContext() {
   return useContext(PreviewContext);
 }
+
+export function useEdgeDimming(source: string, target: string): boolean {
+  const sourceState = usePreviewHighlight(source);
+  const targetState = usePreviewHighlight(target);
+  return sourceState === "dimmed" || targetState === "dimmed";
+}

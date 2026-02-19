@@ -8,7 +8,7 @@ import {
   type EdgeProps,
 } from "@xyflow/react";
 import { useEffect, useState, type FC } from "react";
-import { usePreviewHighlight } from "../../preview/PreviewContext";
+import { useEdgeDimming } from "../../preview/PreviewContext";
 
 const BoxEdgeComponent: FC<EdgeProps<Edge>> = ({
   id,
@@ -44,9 +44,7 @@ const BoxEdgeComponent: FC<EdgeProps<Edge>> = ({
     );
   }, [data?.index]);
 
-  const sourceHighlight = usePreviewHighlight(source);
-  const targetHighlight = usePreviewHighlight(target);
-  const isDimmed = sourceHighlight === "dimmed" || targetHighlight === "dimmed";
+  const isDimmed = useEdgeDimming(source, target);
 
   return (
     <BaseEdge
