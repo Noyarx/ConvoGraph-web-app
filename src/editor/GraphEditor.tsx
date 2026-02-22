@@ -5,7 +5,6 @@ import {
   Panel,
   ReactFlow,
   SelectionMode,
-  StepEdge,
   useEdgesState,
   useNodesState,
   type Connection,
@@ -21,9 +20,11 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@material-tailwind/react";
 import { RedoRounded, UndoRounded } from "@mui/icons-material";
+import { Drawer } from "@mui/material";
 import React from "react";
 import { v4 as uuidv4 } from "uuid";
 import BoxEdgeComponent from "../edges/components/boxEdgeComponent";
+import StepEdgeWithHighlight from "../edges/components/StepEdgeWithHighlight";
 import { useFlowHistory } from "../flow-history/FlowHistoryContext";
 import Header from "../header/components/Header";
 import { getConnectNodeMenuItems } from "../menu/connectNodeMenuItems";
@@ -34,6 +35,8 @@ import ConditionalNodeComponent from "../nodes/components/ConditionalNodeCompone
 import EventNodeComponent from "../nodes/components/EventNodeComponent";
 import QuestionNodeComponent from "../nodes/components/QuestionNodeComponent";
 import StatementNodeComponent from "../nodes/components/StatementNodeComponent";
+import ConversationPreview, { PREVIEW_BG, PREVIEW_BORDER } from "../preview/ConversationPreview";
+import { PreviewProvider, usePreviewContext } from "../preview/PreviewContext";
 import SideBar from "../sidebar/components/Sidebar";
 import FloatingToolbar from "../toolbar/components/FloatingToolbar";
 import { useGraphActions } from "./UseGraphActions";
@@ -49,12 +52,14 @@ const nodeTypes: NodeTypes = {
 };
 // custom edge types to pass as props to ReactFlow
 const edgeTypes: EdgeTypes = {
-  default: StepEdge,
+  default: StepEdgeWithHighlight,
   box: BoxEdgeComponent,
 };
 
+const PREVIEW_WIDTH = 380;
+
 //#region COMPONENT
-export default function GraphEditor() {
+function GraphEditorInner() {
   const initialNodes: Node[] = [];
   const initialEdges: Edge[] = [];
 
@@ -64,10 +69,13 @@ export default function GraphEditor() {
   const flowHistory = useFlowHistory();
   const actions = useGraphActions();
   const { openMenu } = useMenu();
+  const previewCtx = usePreviewContext();
   const [editingElement, setEditingElement] = useState<Node | Edge | null>(
     null,
   );
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const [previewOpen, setPreviewOpen] = useState<boolean>(false);
+  const [previewFullscreen, setPreviewFullscreen] = useState<boolean>(false);
   const [contextMenu, setContextMenu] = useState({
     open: false,
     position: { x: 0, y: 0 },
@@ -93,6 +101,8 @@ export default function GraphEditor() {
       setEdges((eds) => addEdge(editedEdge, eds));
       // open the edit modal only if the source node is a question
       setEditingElement(editedEdge);
+      setPreviewOpen(false);
+      previewCtx.deactivate();
       setSidebarOpen(true);
     },
     [setEdges, flowNodes],
@@ -159,6 +169,8 @@ export default function GraphEditor() {
   const handleNodeClick: NodeMouseHandler<Node> = useCallback(
     (_e: React.MouseEvent<Element, MouseEvent>, node: Node) => {
       setEditingElement(node);
+      setPreviewOpen(false);
+      previewCtx.deactivate();
       setSidebarOpen(true);
     },
     [flowNodes],
@@ -166,8 +178,9 @@ export default function GraphEditor() {
 
   const handleEdgeClick: EdgeMouseHandler<Edge> = useCallback(
     (_e: React.MouseEvent<Element, MouseEvent>, edge: Edge) => {
-      // console.log("Clicked edge: ", edge);
       setEditingElement(edge);
+      setPreviewOpen(false);
+      previewCtx.deactivate();
       setSidebarOpen(true);
     },
     [edges],
@@ -199,7 +212,6 @@ export default function GraphEditor() {
   const handlePaneContextMenu = useCallback(
     (evt: MouseEvent | React.MouseEvent<Element, MouseEvent>) => {
       evt.preventDefault();
-      // console.log("click position: ", { x: evt.clientX, y: evt.clientY });
       setContextMenu({
         open: true,
         position: { x: evt.clientX, y: evt.clientY },
@@ -230,6 +242,30 @@ export default function GraphEditor() {
   };
 
   const handleClose = () => setContextMenu((m) => ({ ...m, open: false }));
+
+  const handleOpenPreview = useCallback(() => {
+    if (flowNodes.length < 1) {
+      alert("⚠️ There are no nodes to preview!");
+      return;
+    }
+    // Deselect all nodes/edges so handles disappear
+    setFlowNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
+    setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
+    setSidebarOpen(false);
+    setPreviewOpen(true);
+    previewCtx.activate();
+  }, [flowNodes]);
+
+  const handleClosePreview = useCallback(() => {
+    setPreviewOpen(false);
+    setPreviewFullscreen(false);
+    setEditingElement(null);
+    previewCtx.deactivate();
+  }, []);
+
+  const handleToggleFullscreen = useCallback(() => {
+    setPreviewFullscreen((prev) => !prev);
+  }, []);
 
   //#region SAVE/RESTORE STATE
 
@@ -263,61 +299,67 @@ export default function GraphEditor() {
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onNodeClick={handleNodeClick}
-        onEdgeClick={handleEdgeClick}
-        onNodeContextMenu={handleNodeContextMenu}
-        onEdgeContextMenu={handleEdgeContextMenu}
-        onPaneContextMenu={handlePaneContextMenu}
-        onSelectionContextMenu={handleSelectionContextMenu}
-        onConnectEnd={handleOnConnectEnd}
+        onConnect={previewOpen ? undefined : onConnect}
+        onNodeClick={previewOpen ? undefined : handleNodeClick}
+        onEdgeClick={previewOpen ? undefined : handleEdgeClick}
+        onNodeContextMenu={previewOpen ? undefined : handleNodeContextMenu}
+        onEdgeContextMenu={previewOpen ? undefined : handleEdgeContextMenu}
+        onPaneContextMenu={previewOpen ? undefined : handlePaneContextMenu}
+        onSelectionContextMenu={previewOpen ? undefined : handleSelectionContextMenu}
+        onConnectEnd={previewOpen ? undefined : handleOnConnectEnd}
         onInit={flowHistory.setRfInstance}
-        onNodeDragStart={flowHistory.saveState} // save flow state when starting to move a node
-        onDelete={flowHistory.saveState} // save flow state before deleting an element
+        onNodeDragStart={previewOpen ? undefined : flowHistory.saveState}
+        onDelete={previewOpen ? undefined : flowHistory.saveState}
+        nodesDraggable={!previewOpen}
+        nodesConnectable={!previewOpen}
+        elementsSelectable={!previewOpen}
         selectionMode={SelectionMode.Partial}
-        selectionOnDrag={true}
-        panOnDrag={[1]} // only allow pane drag using middle mouse button
+        selectionOnDrag={!previewOpen}
+        panOnDrag={[1]}
         connectionRadius={40}
         minZoom={0.02}
         fitView
+        className={previewOpen ? "preview-locked" : ""}
       >
         <Panel className="flex flex-row">
-          <Header />
+          <Header onPreview={handleOpenPreview} />
         </Panel>
-        <Panel
-          position="bottom-left"
-          style={{ boxShadow: "0px 0px 3px 0.1vh #00000014" }}
-          className="flex flex-row gap-2 border border-slate-100 rounded-xl p-1 bg-surface-light bg-opacity-60"
-        >
-          <Button
-            onClick={flowHistory.undo}
-            className="flex flex-row pl-1.5 pr-2 py-1 gap-1 rounded-2xl justify-between"
+        {!previewOpen && (
+          <Panel
+            position="bottom-left"
+            style={{ boxShadow: "0px 0px 3px 0.1vh #00000014" }}
+            className="flex flex-row gap-2 border border-slate-100 rounded-xl p-1 bg-surface-light bg-opacity-60"
           >
-            <UndoRounded />
-            {/* <span className="font-bold">Undo</span> */}
-          </Button>
-          <Button
-            className="flex flex-row pl-2 pr-1.5 py-1 gap-1 rounded-2xl justify-between"
-            onClick={flowHistory.redo}
-          >
-            {/* <span className="font-bold">Redo</span> */}
-            <RedoRounded />
-          </Button>
-        </Panel>
+            <Button
+              onClick={flowHistory.undo}
+              className="flex flex-row pl-1.5 pr-2 py-1 gap-1 rounded-2xl justify-between"
+            >
+              <UndoRounded />
+            </Button>
+            <Button
+              className="flex flex-row pl-2 pr-1.5 py-1 gap-1 rounded-2xl justify-between"
+              onClick={flowHistory.redo}
+            >
+              <RedoRounded />
+            </Button>
+          </Panel>
+        )}
         <Background />
-        <Panel
-          position="bottom-center"
-          className="rounded-md"
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            columnGap: 8,
-            justifyContent: "space-between",
-            marginTop: 20,
-          }}
-        >
-          <FloatingToolbar />
-        </Panel>
+        {!previewOpen && (
+          <Panel
+            position="bottom-center"
+            className="rounded-md"
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              columnGap: 8,
+              justifyContent: "space-between",
+              marginTop: 20,
+            }}
+          >
+            <FloatingToolbar />
+          </Panel>
+        )}
       </ReactFlow>
       <ContextMenu
         open={contextMenu.open}
@@ -332,9 +374,52 @@ export default function GraphEditor() {
         onClose={handleSidebarClose}
         onSaveNode={handleSaveNode}
         onSaveEdge={handleSaveEdge}
+        onPreview={handleOpenPreview}
       />
+      {/* Preview Sidebar / Fullscreen */}
+      {previewOpen && (
+        <Drawer
+          anchor="right"
+          open
+          onClose={handleClosePreview}
+          variant="persistent"
+          sx={{
+            width: previewFullscreen ? "100%" : PREVIEW_WIDTH,
+            flexShrink: 0,
+            "& .MuiDrawer-paper": {
+              width: previewFullscreen ? "100%" : PREVIEW_WIDTH,
+              boxSizing: "border-box",
+              backgroundColor: PREVIEW_BG,
+              borderLeft: previewFullscreen ? "none" : `1px solid ${PREVIEW_BORDER}`,
+              transition: "width 0.3s ease",
+            },
+          }}
+        >
+          <ConversationPreview
+            nodes={flowNodes}
+            edges={edges}
+            startNodeId={
+              editingElement && !("source" in editingElement)
+                ? editingElement.id
+                : null
+            }
+            fullscreen={previewFullscreen}
+            onClose={handleClosePreview}
+            onToggleFullscreen={handleToggleFullscreen}
+            onHighlightChange={previewCtx.setHighlight}
+          />
+        </Drawer>
+      )}
     </div>
   );
   //#endregion
+}
+
+export default function GraphEditor() {
+  return (
+    <PreviewProvider>
+      <GraphEditorInner />
+    </PreviewProvider>
+  );
 }
 //#endregion

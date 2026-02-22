@@ -8,6 +8,7 @@ import {
   type EdgeProps,
 } from "@xyflow/react";
 import { useEffect, useState, type FC } from "react";
+import { useEdgeDimming } from "../../preview/PreviewContext";
 
 const BoxEdgeComponent: FC<EdgeProps<Edge>> = ({
   id,
@@ -20,6 +21,7 @@ const BoxEdgeComponent: FC<EdgeProps<Edge>> = ({
   data,
   label,
   source,
+  target,
 }) => {
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
@@ -42,8 +44,18 @@ const BoxEdgeComponent: FC<EdgeProps<Edge>> = ({
     );
   }, [data?.index]);
 
+  const isDimmed = useEdgeDimming(source, target);
+
   return (
-    <BaseEdge id={id} path={edgePath} interactionWidth={80}>
+    <BaseEdge
+      id={id}
+      path={edgePath}
+      interactionWidth={80}
+      style={{
+        ...(isDimmed && { opacity: 0.12 }),
+        transition: "opacity 0.3s",
+      }}
+    >
       <EdgeLabelRenderer>
         <div
           style={{
@@ -55,6 +67,8 @@ const BoxEdgeComponent: FC<EdgeProps<Edge>> = ({
             maxWidth: 200,
             minHeight: 60,
             borderRadius: 9,
+            ...(isDimmed && { opacity: 0.15, filter: "grayscale(0.5)" }),
+            transition: "opacity 0.3s, filter 0.3s",
           }}
           className="nodrag nopan p-4 flex flex-col gap-1"
         >

@@ -1,8 +1,10 @@
 import { Handle, Position, useStore, type Node } from "@xyflow/react";
 import { memo, useMemo } from "react";
 import type { EventNode } from "../../models/NodeTypes.model";
+import { usePreviewHighlight } from "../../preview/PreviewContext";
 import { Placeholder } from "./placeholderComponent";
 import {
+  getHighlightStyle,
   getInverseScale,
   HANDLE_OFFSET,
   sourceHandleStyle,
@@ -21,12 +23,14 @@ function EventNodeComponent(flowNode: Pick<Node, "data">) {
     () => zoomedIn && nodo.selected,
     [zoomedIn, nodo.selected],
   );
+  const highlightState = usePreviewHighlight(node.id);
 
   return (
     <div
       className="flex flex-col gap-1 rounded-lg p-4 break-words max-w-[330px] min-w-[200px] text-white"
       style={{
         backgroundColor: node.node_info.color || bgColor,
+        ...getHighlightStyle(highlightState),
       }}
     >
       {zoomedIn ? (
@@ -78,7 +82,7 @@ function EventNodeComponent(flowNode: Pick<Node, "data">) {
           <div
             style={{
               position: "absolute",
-              display: showHandles ? "flex" : "none",
+              display: "flex",
               justifyContent: "center",
               alignItems: "center",
               top: 20,

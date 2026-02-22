@@ -1,5 +1,6 @@
 import { Button } from "@material-tailwind/react";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
+import PlayArrowRounded from "@mui/icons-material/PlayArrowRounded";
 import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
 import { useReactFlow } from "@xyflow/react";
 import { exportTimelineToJSON } from "../../export/JsonExport";
@@ -11,7 +12,11 @@ import {
 } from "../../nodes/utils/xyflowAdapter";
 import { useFlowHistory } from "../../flow-history/FlowHistoryContext";
 
-function Header() {
+interface HeaderProps {
+  onPreview: () => void;
+}
+
+function Header({ onPreview }: HeaderProps) {
   const flowHistory = useFlowHistory();
   const { getNodes, getEdges, setNodes, setEdges } = useReactFlow();
 
@@ -71,6 +76,23 @@ function Header() {
                 <strong>Export</strong>
               </p>
               <FileDownloadOutlinedIcon />
+            </Button>
+          </div>
+          <div className="flex flex-row gap-2 pl-2 items-center pointer-events-auto">
+            <Button
+              style={{
+                transitionProperty: "background-color color",
+                transitionDuration: "0.2s",
+              }}
+              className="flex flex-row p-2 gap-2 justify-between"
+              type="button"
+              variant="solid"
+              onClick={onPreview}
+            >
+              <PlayArrowRounded />
+              <p>
+                <strong>Preview</strong>
+              </p>
             </Button>
           </div>
         </div>

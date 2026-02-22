@@ -1,0 +1,699 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Edge, Node } from "@xyflow/react";
+import { Close, Fullscreen, FullscreenExit } from "@mui/icons-material";
+import { IconButton } from "@mui/material";
+import { flowToGraphTree } from "../nodes/utils/xyflowAdapter";
+import type { GraphNode } from "../models/NodeTypes.model";
+import type { DialogueChoice } from "../models/DialogueChoice.model";
+
+/* ── Theme constants ── */
+
+export const PREVIEW_BG = "#0f172a";
+export const PREVIEW_BORDER = "#1e293b";
+
+/* ── Types ── */
+
+interface ConversationPreviewProps {
+  nodes: Node[];
+  edges: Edge[];
+  startNodeId: string | null;
+  fullscreen: boolean;
+  onClose: () => void;
+  onToggleFullscreen: () => void;
+  onHighlightChange: (visited: Set<string>, current: string | null) => void;
+}
+
+type ChatEntry =
+  | {
+      type: "dialogue";
+      nodeId: string;
+      speaker: string;
+      mood: string;
+      text: string;
+      color: string;
+      nextNodeId: string;
+    }
+  | {
+      type: "question";
+      nodeId: string;
+      speaker: string;
+      mood: string;
+      text: string;
+      color: string;
+      choices: DialogueChoice[];
+      selectedIndex: number | null;
+    }
+  | {
+      type: "condition";
+      nodeId: string;
+      varName: string;
+      operator: string;
+      value: string;
+      nextTrue: string;
+      nextFalse: string;
+      selectedBranch: "true" | "false" | null;
+    }
+  | {
+      type: "event";
+      nodeId: string;
+      eventName: string;
+    };
+
+/* ── Pure helpers ── */
+
+function findRootNode(graphNodes: GraphNode[]): GraphNode | undefined {
+  const referencedIds = new Set<string>();
+  for (const node of graphNodes) {
+    switch (node.type) {
+      case "statement":
+      case "event":
+        if (node.next_node) referencedIds.add(node.next_node);
+        break;
+      case "question":
+        node.choices.forEach((c) => referencedIds.add(c.next_node));
+        break;
+      case "condition":
+        if (node.next_node_true) referencedIds.add(node.next_node_true);
+        if (node.next_node_false) referencedIds.add(node.next_node_false);
+        break;
+    }
+  }
+  return graphNodes.find(
+    (n) => n.type !== "comment" && !referencedIds.has(n.id),
+  );
+}
+
+function checkHasNext(node: GraphNode, nodeMap: Map<string, GraphNode>): boolean {
+  switch (node.type) {
+    case "statement":
+    case "event":
+      return !!node.next_node && nodeMap.has(node.next_node);
+    case "question":
+      return node.choices.length > 0;
+    case "condition":
+      return (
+        (!!node.next_node_true && nodeMap.has(node.next_node_true)) ||
+        (!!node.next_node_false && nodeMap.has(node.next_node_false))
+      );
+    case "comment":
+      return false;
+  }
+}
+
+function nodeToEntry(node: GraphNode): ChatEntry | null {
+  switch (node.type) {
+    case "statement":
+      return {
+        type: "dialogue",
+        nodeId: node.id,
+        speaker: node.data.speaker,
+        mood: node.data.mood,
+        text: node.data.text,
+        color: node.node_info.color,
+        nextNodeId: node.next_node,
+      };
+    case "question":
+      return {
+        type: "question",
+        nodeId: node.id,
+        speaker: node.data.speaker,
+        mood: node.data.mood,
+        text: node.data.text,
+        color: node.node_info.color,
+        choices: [...node.choices].sort((a, b) => a.index - b.index),
+        selectedIndex: null,
+      };
+    case "condition":
+      return {
+        type: "condition",
+        nodeId: node.id,
+        varName: node.data.var_name,
+        operator: node.data.operator,
+        value: String(node.data.value),
+        nextTrue: node.next_node_true,
+        nextFalse: node.next_node_false,
+        selectedBranch: null,
+      };
+    case "event":
+      return {
+        type: "event",
+        nodeId: node.id,
+        eventName: node.data.event_name,
+      };
+    case "comment":
+      return null;
+  }
+}
+
+/* ── Main component ── */
+
+export default function ConversationPreview({
+  nodes,
+  edges,
+  startNodeId,
+  fullscreen,
+  onClose,
+  onToggleFullscreen,
+  onHighlightChange,
+}: ConversationPreviewProps) {
+  const { nodeMap, startId } = useMemo(() => {
+    const graphNodes = flowToGraphTree(nodes, edges);
+    const map = new Map<string, GraphNode>(graphNodes.map((n) => [n.id, n]));
+
+    let start = startNodeId;
+    if (!start || !map.has(start)) {
+      const root = findRootNode(graphNodes);
+      start = root?.id ?? null;
+    }
+    if (start && map.get(start)?.type === "comment") {
+      start = null;
+    }
+    return { nodeMap: map, startId: start };
+  }, [nodes, edges, startNodeId]);
+
+  const initialState = useMemo(() => {
+    if (!startId) return { log: [] as ChatEntry[], done: true };
+    const node = nodeMap.get(startId);
+    if (!node || node.type === "comment") return { log: [] as ChatEntry[], done: true };
+    const entry = nodeToEntry(node);
+    if (!entry) return { log: [] as ChatEntry[], done: true };
+    const done = !checkHasNext(node, nodeMap);
+    return { log: [entry], done };
+  }, [startId, nodeMap]);
+
+  const [chatLog, setChatLog] = useState<ChatEntry[]>(initialState.log);
+  const [finished, setFinished] = useState(initialState.done);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const eventTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const advancePendingRef = useRef(false);
+
+  // Notify parent of highlight changes whenever chatLog changes
+  useEffect(() => {
+    const visited = new Set<string>();
+    let current: string | null = null;
+    for (let i = 0; i < chatLog.length; i++) {
+      const entry = chatLog[i];
+      if (i < chatLog.length - 1) {
+        visited.add(entry.nodeId);
+      } else {
+        current = entry.nodeId;
+      }
+    }
+    onHighlightChange(visited, current);
+  }, [chatLog, onHighlightChange]);
+
+  // Scroll to bottom when chat grows
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [chatLog, finished]);
+
+  const pushNode = useCallback(
+    (nodeId: string | null) => {
+      if (!nodeId || !nodeMap.has(nodeId)) {
+        setFinished(true);
+        return;
+      }
+      const node = nodeMap.get(nodeId)!;
+      if (node.type === "comment") {
+        setFinished(true);
+        return;
+      }
+      const entry = nodeToEntry(node);
+      if (!entry) {
+        setFinished(true);
+        return;
+      }
+      setChatLog((prev) => [...prev, entry]);
+      if (!checkHasNext(node, nodeMap)) {
+        setFinished(true);
+      }
+    },
+    [nodeMap],
+  );
+
+  // Auto-advance for event nodes
+  useEffect(() => {
+    const lastEntry = chatLog[chatLog.length - 1];
+    if (lastEntry?.type === "event") {
+      const node = nodeMap.get(lastEntry.nodeId);
+      if (node?.type === "event") {
+        eventTimerRef.current = setTimeout(() => {
+          pushNode(node.next_node || null);
+        }, 1000);
+        return () => {
+          if (eventTimerRef.current) clearTimeout(eventTimerRef.current);
+        };
+      }
+    }
+  }, [chatLog, nodeMap, pushNode]);
+
+  /** Unified handler: select a choice/branch and advance after delay */
+  const handleSelect = useCallback(
+    (entryIndex: number, nextNodeId: string, patch: Partial<ChatEntry>) => {
+      if (advancePendingRef.current) return;
+      let changed = false;
+      setChatLog((prev) => {
+        const entry = prev[entryIndex];
+        if (entry.type === "question" && entry.selectedIndex !== null) return prev;
+        if (entry.type === "condition" && entry.selectedBranch !== null) return prev;
+        const updated = [...prev];
+        updated[entryIndex] = { ...entry, ...patch } as ChatEntry;
+        changed = true;
+        return updated;
+      });
+      if (changed) {
+        advancePendingRef.current = true;
+        setTimeout(() => {
+          pushNode(nextNodeId || null);
+          advancePendingRef.current = false;
+        }, 200);
+      }
+    },
+    [pushNode],
+  );
+
+  /** Unified handler: rewind to a previous choice/branch and re-advance */
+  const handleRewind = useCallback(
+    (entryIndex: number, nextNodeId: string, patch: Partial<ChatEntry>) => {
+      if (advancePendingRef.current) return;
+      setChatLog((prev) => {
+        const truncated = prev.slice(0, entryIndex + 1);
+        truncated[entryIndex] = { ...truncated[entryIndex], ...patch } as ChatEntry;
+        return truncated;
+      });
+      setFinished(false);
+      advancePendingRef.current = true;
+      setTimeout(() => {
+        pushNode(nextNodeId || null);
+        advancePendingRef.current = false;
+      }, 200);
+    },
+    [pushNode],
+  );
+
+  // Keyboard
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key === "Enter") {
+        const lastEntry = chatLog[chatLog.length - 1];
+        if (!lastEntry) return;
+        if (lastEntry.type === "dialogue") {
+          pushNode(lastEntry.nextNodeId || null);
+        }
+        if (lastEntry.type === "event") {
+          if (eventTimerRef.current) clearTimeout(eventTimerRef.current);
+          const node = nodeMap.get(lastEntry.nodeId);
+          if (node?.type === "event") pushNode(node.next_node || null);
+        }
+      }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [chatLog, nodeMap, pushNode, onClose]);
+
+  const isLastEntry = (i: number) => i === chatLog.length - 1;
+
+  return (
+    <div className="flex flex-col h-full" style={{ backgroundColor: PREVIEW_BG }}>
+      {/* Header bar */}
+      <div
+        className="flex items-center justify-between shrink-0"
+        style={{ padding: "10px 14px", borderBottom: `1px solid ${PREVIEW_BORDER}` }}
+      >
+        <span className="text-slate-400 text-[13px] font-semibold">Preview</span>
+        <div className="flex gap-0.5">
+          <IconButton onClick={onToggleFullscreen} style={{ color: "#94a3b8" }} size="small">
+            {fullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
+          </IconButton>
+          <IconButton onClick={onClose} style={{ color: "#94a3b8" }} size="small">
+            <Close fontSize="small" />
+          </IconButton>
+        </div>
+      </div>
+
+      {/* Chat area */}
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto flex flex-col items-center"
+        style={{
+          padding: fullscreen ? "24px 16px" : "16px 10px",
+          transition: "padding 0.3s ease",
+        }}
+      >
+        <div className="w-full max-w-[640px] flex flex-col gap-2.5">
+          {chatLog.map((entry, i) => (
+            <div key={`${entry.nodeId}-${i}`} className="animate-fade-slide-in">
+              {entry.type === "dialogue" && (
+                <DialogueBubble
+                  entry={entry}
+                  isLast={isLastEntry(i) && !finished}
+                  onContinue={() => pushNode(entry.nextNodeId || null)}
+                />
+              )}
+              {entry.type === "question" && (
+                <QuestionBubble
+                  entry={entry}
+                  isLast={isLastEntry(i) && !finished}
+                  onSelectChoice={(choiceIdx) => {
+                    const choice = entry.choices.find((c) => c.index === choiceIdx);
+                    if (choice) handleSelect(i, choice.next_node, { selectedIndex: choiceIdx });
+                  }}
+                  onRewind={(choiceIdx) => {
+                    const choice = entry.choices.find((c) => c.index === choiceIdx);
+                    if (choice) handleRewind(i, choice.next_node, { selectedIndex: choiceIdx });
+                  }}
+                />
+              )}
+              {entry.type === "condition" && (
+                <ConditionBubble
+                  entry={entry}
+                  onSelectBranch={(branch) => {
+                    const nextId = branch === "true" ? entry.nextTrue : entry.nextFalse;
+                    handleSelect(i, nextId, { selectedBranch: branch });
+                  }}
+                  onRewind={(branch) => {
+                    const nextId = branch === "true" ? entry.nextTrue : entry.nextFalse;
+                    handleRewind(i, nextId, { selectedBranch: branch });
+                  }}
+                />
+              )}
+              {entry.type === "event" && <EventBubble entry={entry} />}
+            </div>
+          ))}
+
+          {finished && (
+            <div className="text-center animate-fade-slide-in" style={{ padding: "24px 0 12px" }}>
+              <p className="text-sm text-slate-500 mb-3">End of conversation</p>
+              <button
+                onClick={onClose}
+                className="px-6 py-1.5 rounded-lg bg-slate-700 text-slate-100 border border-slate-600 cursor-pointer text-[13px] font-semibold hover:bg-slate-600 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Keyboard hints */}
+      <div
+        className="text-center shrink-0"
+        style={{ padding: "6px 14px", borderTop: `1px solid ${PREVIEW_BORDER}` }}
+      >
+        <span className="text-[11px] text-slate-600">
+          <strong>Enter</strong> continue · <strong>Esc</strong> close
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ── Sub-components ── */
+
+function DialogueBubble({
+  entry,
+  isLast,
+  onContinue,
+}: {
+  entry: ChatEntry & { type: "dialogue" };
+  isLast: boolean;
+  onContinue: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 rounded-[10px] bg-slate-800 border border-slate-700 px-3.5 py-2.5">
+      <SpeakerHeader speaker={entry.speaker} mood={entry.mood} color={entry.color} />
+      <p className="text-[13px] text-slate-200 leading-relaxed m-0">{entry.text}</p>
+      {isLast && (
+        <button
+          onClick={onContinue}
+          className="self-end px-3.5 py-1 rounded-md bg-slate-700 text-slate-300 border border-slate-600 cursor-pointer text-xs font-semibold mt-0.5 hover:bg-slate-600 transition-colors"
+        >
+          Continue ↵
+        </button>
+      )}
+    </div>
+  );
+}
+
+function QuestionBubble({
+  entry,
+  isLast,
+  onSelectChoice,
+  onRewind,
+}: {
+  entry: ChatEntry & { type: "question" };
+  isLast: boolean;
+  onSelectChoice: (choiceIndex: number) => void;
+  onRewind: (choiceIndex: number) => void;
+}) {
+  const answered = entry.selectedIndex !== null;
+
+  return (
+    <div className="flex flex-col gap-1.5 rounded-[10px] bg-slate-800 border border-slate-700 px-3.5 py-2.5">
+      <SpeakerHeader speaker={entry.speaker} mood={entry.mood} color={entry.color} />
+      <p className="text-[13px] text-slate-200 leading-relaxed m-0">{entry.text}</p>
+      <div className="flex flex-col gap-[5px] mt-1">
+        {entry.choices.map((choice) => {
+          const isSelected = entry.selectedIndex === choice.index;
+          const isUnselectedAfterAnswer = answered && !isSelected;
+          const borderColor =
+            choice.color && choice.color !== "#F5F5F5"
+              ? choice.color
+              : "#475569";
+
+          let opacity = 1;
+          let bg = "rgba(255,255,255,0.04)";
+          let cursor: string = "pointer";
+          let borderStyle: string = "solid";
+
+          if (answered) {
+            if (isSelected) {
+              bg = "rgba(255,255,255,0.1)";
+              cursor = "default";
+            } else {
+              opacity = 0.5;
+              borderStyle = "dashed";
+            }
+          }
+
+          const handleClick = () => {
+            if (!answered && isLast) {
+              onSelectChoice(choice.index);
+            } else if (isUnselectedAfterAnswer) {
+              onRewind(choice.index);
+            }
+          };
+
+          return (
+            <div
+              key={choice.index}
+              onClick={handleClick}
+              style={{
+                padding: "7px 12px",
+                borderRadius: 7,
+                border: `1px ${borderStyle} ${borderColor}`,
+                borderWidth: isSelected ? 2 : 1,
+                backgroundColor: bg,
+                color: "#e2e8f0",
+                cursor,
+                fontSize: 13,
+                opacity,
+                transition: "opacity 0.2s, background-color 0.15s, border-width 0.15s",
+              }}
+              onMouseEnter={(e) => {
+                if ((!answered && isLast) || isUnselectedAfterAnswer) {
+                  e.currentTarget.style.backgroundColor = isUnselectedAfterAnswer
+                    ? "rgba(255,255,255,0.08)"
+                    : "rgba(255,255,255,0.1)";
+                  if (isUnselectedAfterAnswer) {
+                    e.currentTarget.style.opacity = "0.75";
+                  }
+                }
+              }}
+              onMouseLeave={(e) => {
+                if ((!answered && isLast) || isUnselectedAfterAnswer) {
+                  e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)";
+                  if (isUnselectedAfterAnswer) {
+                    e.currentTarget.style.opacity = "0.5";
+                  }
+                }
+              }}
+            >
+              {choice.text || `Choice ${choice.index + 1}`}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ConditionBubble({
+  entry,
+  onSelectBranch,
+  onRewind,
+}: {
+  entry: ChatEntry & { type: "condition" };
+  onSelectBranch: (branch: "true" | "false") => void;
+  onRewind: (branch: "true" | "false") => void;
+}) {
+  const answered = entry.selectedBranch !== null;
+
+  const renderBranchButton = (branch: "true" | "false") => {
+    const isTrue = branch === "true";
+    const isSelected = entry.selectedBranch === branch;
+    const isUnselectedAfterAnswer = answered && !isSelected;
+
+    const baseColor = isTrue ? "34,197,94" : "239,68,68";
+    const textColor = isTrue ? "#4ade80" : "#f87171";
+
+    let bg: string;
+    let borderStyle = "solid";
+    let borderOpacity: string;
+    let cursor: string;
+    let opacity: number;
+
+    if (!answered) {
+      bg = `rgba(${baseColor},0.1)`;
+      borderOpacity = "0.25";
+      cursor = "pointer";
+      opacity = 1;
+    } else if (isSelected) {
+      bg = `rgba(${baseColor},0.25)`;
+      borderOpacity = "0.5";
+      cursor = "default";
+      opacity = 1;
+    } else {
+      bg = `rgba(${baseColor},0.1)`;
+      borderOpacity = "0.25";
+      borderStyle = "dashed";
+      cursor = "pointer";
+      opacity = 0.5;
+    }
+
+    const handleClick = () => {
+      if (!answered) {
+        onSelectBranch(branch);
+      } else if (isUnselectedAfterAnswer) {
+        onRewind(branch);
+      }
+    };
+
+    return (
+      <button
+        key={branch}
+        onClick={handleClick}
+        style={{
+          padding: "6px 20px",
+          borderRadius: 7,
+          backgroundColor: bg,
+          color: textColor,
+          border: `1px ${borderStyle} rgba(${baseColor},${borderOpacity})`,
+          borderWidth: isSelected ? 2 : 1,
+          cursor,
+          fontSize: 13,
+          fontWeight: 600,
+          opacity,
+          transition: "opacity 0.2s, background-color 0.15s, border-width 0.15s",
+        }}
+        onMouseEnter={(e) => {
+          if (!answered || isUnselectedAfterAnswer) {
+            e.currentTarget.style.backgroundColor = isUnselectedAfterAnswer
+              ? `rgba(${baseColor},0.18)`
+              : `rgba(${baseColor},0.2)`;
+            if (isUnselectedAfterAnswer) {
+              e.currentTarget.style.opacity = "0.75";
+            }
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!answered || isUnselectedAfterAnswer) {
+            e.currentTarget.style.backgroundColor = `rgba(${baseColor},0.1)`;
+            if (isUnselectedAfterAnswer) {
+              e.currentTarget.style.opacity = "0.5";
+            }
+          }
+        }}
+      >
+        {isTrue ? "True" : "False"}
+      </button>
+    );
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-2 py-3">
+      <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">
+        Condition
+      </span>
+      <div
+        className="flex gap-1.5 items-center text-xs rounded-[7px]"
+        style={{
+          padding: "5px 12px",
+          backgroundColor: "rgba(252,123,219,0.12)",
+          border: "1px solid rgba(252,123,219,0.25)",
+        }}
+      >
+        <span className="text-slate-200 font-semibold">{entry.varName}</span>
+        <span className="text-slate-400">{entry.operator}</span>
+        <span className="text-slate-200 font-semibold">{entry.value}</span>
+      </div>
+      <div className="flex gap-2.5">
+        {renderBranchButton("true")}
+        {renderBranchButton("false")}
+      </div>
+    </div>
+  );
+}
+
+function EventBubble({
+  entry,
+}: {
+  entry: ChatEntry & { type: "event" };
+}) {
+  return (
+    <div className="flex justify-center py-1.5">
+      <div
+        className="flex items-center gap-1.5 text-xs font-medium rounded-full"
+        style={{
+          padding: "4px 12px",
+          backgroundColor: "rgba(255,165,0,0.1)",
+          border: "1px solid rgba(255,165,0,0.2)",
+          color: "#FFA500",
+        }}
+      >
+        <span className="text-[9px] uppercase tracking-wide text-slate-400">Event</span>
+        {entry.eventName}
+      </div>
+    </div>
+  );
+}
+
+function SpeakerHeader({
+  speaker,
+  mood,
+  color,
+}: {
+  speaker: string;
+  mood: string;
+  color: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[13px] font-bold" style={{ color }}>{speaker}</span>
+      {mood && (
+        <span className="text-[10px] px-1.5 py-px rounded-lg bg-white/[0.08] text-slate-400">
+          {mood}
+        </span>
+      )}
+    </div>
+  );
+}

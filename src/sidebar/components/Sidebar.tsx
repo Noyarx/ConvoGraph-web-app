@@ -4,8 +4,10 @@ import {
   Drawer,
   IconButton,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
+import PlayArrowRounded from "@mui/icons-material/PlayArrowRounded";
 import { type Edge, type Node } from "@xyflow/react";
 import { useEffect, useState, type ReactNode } from "react";
 import EdgeEditor from "./EdgeEditor";
@@ -13,14 +15,13 @@ import NodeEditor from "./NodeEditor";
 import { CharacterDataProvider } from "../selectItems/CharacterDataContext";
 import { useFlowHistory } from "../../flow-history/FlowHistoryContext";
 
-// (in futuro aggiungeremo anche NodeEditor ecc.)
-
 interface SidebarEditorProps {
   open: boolean;
   onClose: () => void;
   selectedElement: Node | Edge | null;
   onSaveNode: (node: Node) => void;
   onSaveEdge: (edge: Edge) => void;
+  onPreview: () => void;
 }
 
 function Sidebar({
@@ -29,6 +30,7 @@ function Sidebar({
   selectedElement,
   onSaveNode,
   onSaveEdge,
+  onPreview,
 }: SidebarEditorProps) {
   const [element, setElement] = useState<Node | Edge | null>(selectedElement);
   const [modified, setModified] = useState(false);
@@ -176,7 +178,19 @@ function Sidebar({
         <Typography variant="subtitle1" fontWeight={600}>
           {getTitle()}
         </Typography>
-        <span />
+        {selectedElement && !("source" in selectedElement) ? (
+          <Tooltip title="Preview from this node" arrow>
+            <IconButton
+              style={{ outline: "none", color: "#252525ff" }}
+              onClick={onPreview}
+              size="small"
+            >
+              <PlayArrowRounded />
+            </IconButton>
+          </Tooltip>
+        ) : (
+          <span style={{ width: 32 }} />
+        )}
       </Box>
       {/* CONTENUTO */}
       <Box

@@ -8,3 +8,18 @@
 body {
   font-family: 'Poppins', sans-serif;
 }
+
+/* Hide all ReactFlow handles during preview mode */
+.preview-locked .react-flow__handle {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Preview chat bubble entrance animation */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-slide-in {
+  animation: fadeSlideIn 0.25s ease-out;
+}
