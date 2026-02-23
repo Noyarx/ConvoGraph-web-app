@@ -6,18 +6,16 @@ import {
   type CharacterDataContextType,
 } from "../selectItems/CharacterDataContext";
 import { operators, type SelectItem } from "../selectItems/SelectItems";
-import AddableSelect from "../selectItems/components/AddableSelect";
 
 interface NodeEditorProps {
   node: Record<string, any>;
   onChange: (updatedNode: Record<string, any>) => void;
 }
 
-interface AddableSelectProps {
+interface SelectFieldProps {
   value: string;
   items: SelectItem[];
   onChange: (val: string) => void;
-  onAdd: (label: string) => void;
   placeholder?: string;
 }
 
@@ -29,20 +27,34 @@ function NodeEditor({ node, onChange }: NodeEditorProps) {
   const [data, setData] = useState(graphNode.data);
   const context = useCharacterData();
 
-  function renderSelectField(props: AddableSelectProps) {
+  function renderSelectField(props: SelectFieldProps) {
     if (!context) return null;
     return (
-      <AddableSelect
+      <Select
         value={props.value}
-        onChange={props.onChange}
-        onAdd={props.onAdd}
-        items={props.items}
-        placeholder={props.placeholder}
-      />
+        renderValue={(selected) => {
+          if (!selected) return <em>{props.placeholder}</em>;
+          return props.items.find((e) => e.value === selected)?.label;
+        }}
+        onChange={(e) => props.onChange(e.target.value)}
+        style={{ border: "none", outline: "none" }}
+        sx={{ maxHeight: 36, minWidth: 0, width: "100%" }}
+        className="hover:!ring-2 hover:!ring-blue-200"
+      >
+        {props.items.map((item) => (
+          <MenuItem
+            className={`${itemClass} ${itemHoverClass}`}
+            key={item.value}
+            value={item.value}
+          >
+            {item.label}
+          </MenuItem>
+        ))}
+      </Select>
     );
   }
 
-  const { speakers, addSpeaker, getMoodsForSpeaker, addMoodToSpeaker } =
+  const { speakers, getMoodsForSpeaker, getDefaultMoodForSpeaker } =
     context as CharacterDataContextType;
 
   // update editor field values on node selected change
@@ -74,8 +86,8 @@ function NodeEditor({ node, onChange }: NodeEditorProps) {
         return (
           <>
             <Stack rowGap={2}>
-              <Stack direction={"row"} columnGap={1}>
-                <Stack rowGap={0.5}>
+              <Stack direction={"row"} columnGap={1} sx={{ width: "100%" }}>
+                <Stack rowGap={0.5} sx={{ flex: 1, minWidth: 0 }}>
                   <label htmlFor="speaker">
                     <span className="">
                       <strong>Speaker:</strong>
@@ -84,13 +96,24 @@ function NodeEditor({ node, onChange }: NodeEditorProps) {
                   {renderSelectField({
                     value: data.speaker || "",
                     items: speakers,
-                    onChange: (val) => handleChange("speaker", val),
-                    onAdd: addSpeaker,
+                    onChange: (val) => {
+                      const defaultMood = getDefaultMoodForSpeaker(val);
+                      const updatedData = { ...data, speaker: val, mood: defaultMood };
+                      setData(updatedData);
+                      onChange({
+                        ...node,
+                        data: {
+                          ...graphNode,
+                          node_info: { ...graphNode.node_info, position: node.position },
+                          data: updatedData,
+                        },
+                      });
+                    },
                     placeholder: "Speaker",
-                  } as AddableSelectProps)}
+                  })}
                 </Stack>
 
-                <Stack rowGap={0.5}>
+                <Stack rowGap={0.5} sx={{ flex: 1, minWidth: 0 }}>
                   <label htmlFor="mood">
                     <span className="">
                       <strong>Mood:</strong>
@@ -100,10 +123,8 @@ function NodeEditor({ node, onChange }: NodeEditorProps) {
                     value: data.mood || "",
                     onChange: (val) => handleChange("mood", val),
                     items: getMoodsForSpeaker(data.speaker || ""),
-                    onAdd: (label) =>
-                      addMoodToSpeaker(data.speaker || "", label),
                     placeholder: "Mood",
-                  } as AddableSelectProps)}
+                  })}
                 </Stack>
               </Stack>
               <Stack rowGap={0.5}>

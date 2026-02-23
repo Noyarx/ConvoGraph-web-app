@@ -8,6 +8,7 @@ import { bgColor as conditionBgColor } from "../nodes/components/ConditionalNode
 import { bgColor as eventBgColor } from "../nodes/components/EventNodeComponent";
 import { bgColor as questionBgColor } from "../nodes/components/QuestionNodeComponent";
 import { bgColor as statementBgColor } from "../nodes/components/StatementNodeComponent";
+import { useCharacters } from "../characters/CharactersContext";
 import type { addNodeProps, GraphActions } from "./GraphActions.model";
 import { useGraphState } from "./graph-state/GraphStateContext";
 
@@ -15,6 +16,8 @@ function createGraphNode(
   type: NodeTypeString,
   id: string,
   position: { x: number; y: number } = { x: 0, y: 0 },
+  defaultSpeaker: string = "",
+  defaultMood: string = "",
 ): GraphNode {
   switch (type) {
     case "statement":
@@ -28,9 +31,9 @@ function createGraphNode(
           color: statementBgColor,
         },
         data: {
-          speaker: "Matthew",
-          mood: "happy",
-          text: "Ciao, sono Matthew. In realtà sono solo un nuovo nodo blu.",
+          speaker: defaultSpeaker,
+          mood: defaultMood,
+          text: "Hello World!",
         },
       };
     case "question":
@@ -43,9 +46,9 @@ function createGraphNode(
           color: questionBgColor,
         },
         data: {
-          speaker: "Matthew",
-          mood: "happy",
-          text: "Ciao, sono Matthew. In realtà sono solo un nuovo nodo blu.",
+          speaker: defaultSpeaker,
+          mood: defaultMood,
+          text: "Hello World?",
         },
         choices: [],
       };
@@ -125,6 +128,15 @@ export function useGraphActions(): GraphActions {
     fitView,
   } = useReactFlow();
   const flowHistory = useFlowHistory();
+  const { characters, favoriteId } = useCharacters();
+
+  const favChar = characters.find((c) => c.id === favoriteId);
+  const favoriteSpeaker = favChar?.name ?? "";
+  const normalizeMood = (m: string) => m.toLowerCase().replace(/\s+/g, "_");
+  const favoriteMood =
+    favChar && favChar.moods[favChar.favoriteMoodIndex]
+      ? normalizeMood(favChar.moods[favChar.favoriteMoodIndex])
+      : "";
 
   const offset = { x: 120, y: 120 };
 
@@ -149,14 +161,14 @@ export function useGraphActions(): GraphActions {
         type,
         id: newId,
         position: pos,
-        data: createGraphNode(type || "statement", newId, pos) as any,
+        data: createGraphNode(type || "statement", newId, pos, favoriteSpeaker, favoriteMood) as any,
       };
       flowHistory.saveState();
       addNodes(newNode);
       type && selectNodeType(type);
       return newNode ?? null;
     },
-    [addNodes, selectNodeType, flowHistory.saveState],
+    [addNodes, selectNodeType, flowHistory.saveState, favoriteSpeaker, favoriteMood],
   );
 
   const handleDuplicateNode = useCallback(

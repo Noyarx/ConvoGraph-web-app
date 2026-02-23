@@ -32,12 +32,16 @@ function StatementNodeComponent(flowNode: Pick<Node, "data">) {
         {zoomedIn ? (
           <div>
             <div className="flex flex-row justify-between">
-              <span>
-                <strong>{node.data.speaker}</strong>:
-              </span>
-              <span>
-                <strong>{node.data.mood}</strong>
-              </span>
+              {node.data.speaker && (
+                <span>
+                  <strong>{node.data.speaker}</strong>:
+                </span>
+              )}
+              {node.data.mood && (
+                <span>
+                  <strong>{node.data.mood}</strong>
+                </span>
+              )}
             </div>
             <p>{node.data.text}</p>
           </div>

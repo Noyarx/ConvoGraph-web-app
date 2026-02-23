@@ -6,6 +6,7 @@ export interface CharacterDataContextType {
   speakers: SelectItem[];
   addSpeaker: (label: string | null) => void;
   getMoodsForSpeaker: (speakerName: string) => SelectItem[];
+  getDefaultMoodForSpeaker: (speakerName: string) => string;
   addMoodToSpeaker: (speakerName: string, mood: string) => void;
 }
 
@@ -21,7 +22,10 @@ export function CharacterDataProvider({
   const { characters, addCharacter, addMoodToCharacter } = useCharacters();
 
   const speakers = useMemo<SelectItem[]>(
-    () => characters.map((c) => ({ label: c.name, value: c.name })),
+    () => [
+      { label: "None", value: "" },
+      ...characters.map((c) => ({ label: c.name, value: c.name })),
+    ],
     [characters],
   );
 
@@ -38,12 +42,25 @@ export function CharacterDataProvider({
 
   const getMoodsForSpeaker = useCallback(
     (speakerName: string): SelectItem[] => {
+      const noneOption: SelectItem = { label: "None", value: "" };
       const char = characters.find((c) => c.name === speakerName);
-      if (!char) return [];
-      return char.moods.map((m) => ({
-        label: m,
-        value: m.toLowerCase().replace(/\s+/g, "_"),
-      }));
+      if (!char) return [noneOption];
+      return [
+        noneOption,
+        ...char.moods.map((m) => ({
+          label: m,
+          value: m.toLowerCase().replace(/\s+/g, "_"),
+        })),
+      ];
+    },
+    [characters],
+  );
+
+  const getDefaultMoodForSpeaker = useCallback(
+    (speakerName: string): string => {
+      const char = characters.find((c) => c.name === speakerName);
+      if (!char || char.favoriteMoodIndex < 0 || !char.moods[char.favoriteMoodIndex]) return "";
+      return char.moods[char.favoriteMoodIndex].toLowerCase().replace(/\s+/g, "_");
     },
     [characters],
   );
@@ -58,7 +75,7 @@ export function CharacterDataProvider({
 
   return (
     <CharacterDataContext.Provider
-      value={{ speakers, addSpeaker, getMoodsForSpeaker, addMoodToSpeaker }}
+      value={{ speakers, addSpeaker, getMoodsForSpeaker, getDefaultMoodForSpeaker, addMoodToSpeaker }}
     >
       {children}
     </CharacterDataContext.Provider>
