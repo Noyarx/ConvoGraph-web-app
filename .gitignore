@@ -26,3 +26,5 @@ ANALISI_PROGETTO.md
 .claude/settings.local.json
 .gitignore
 screenshots/*
+.env
+.env.local
