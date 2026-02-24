@@ -1,7 +1,7 @@
 import { Handle, Position, useStore, type Node } from "@xyflow/react";
 import { memo, useMemo } from "react";
 import type { EventNode } from "../../models/NodeTypes.model";
-import { usePreviewHighlight } from "../../preview/PreviewContext";
+import { useNodeHighlight } from "../../highlight/NodeHighlightContext";
 import { Placeholder } from "./placeholderComponent";
 import {
   getHighlightStyle,
@@ -23,7 +23,7 @@ function EventNodeComponent(flowNode: Pick<Node, "data">) {
     () => zoomedIn && nodo.selected,
     [zoomedIn, nodo.selected],
   );
-  const highlightState = usePreviewHighlight(node.id);
+  const highlightState = useNodeHighlight(node.id);
 
   return (
     <div

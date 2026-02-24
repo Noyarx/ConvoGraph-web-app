@@ -647,8 +647,8 @@ function ConditionBubble({
         <span className="text-slate-200 font-semibold">{entry.value}</span>
       </div>
       <div className="flex gap-2.5">
-        {renderBranchButton("true")}
         {renderBranchButton("false")}
+        {renderBranchButton("true")}
       </div>
     </div>
   );

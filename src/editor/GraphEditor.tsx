@@ -36,6 +36,7 @@ import EventNodeComponent from "../nodes/components/EventNodeComponent";
 import QuestionNodeComponent from "../nodes/components/QuestionNodeComponent";
 import StatementNodeComponent from "../nodes/components/StatementNodeComponent";
 import ConversationPreview, { PREVIEW_BG, PREVIEW_BORDER } from "../preview/ConversationPreview";
+import { NodeHighlightProvider } from "../highlight/NodeHighlightContext";
 import { PreviewProvider, usePreviewContext } from "../preview/PreviewContext";
 import SideBar from "../sidebar/components/Sidebar";
 import FloatingToolbar from "../toolbar/components/FloatingToolbar";
@@ -244,17 +245,13 @@ function GraphEditorInner() {
   const handleClose = () => setContextMenu((m) => ({ ...m, open: false }));
 
   const handleOpenPreview = useCallback(() => {
-    if (flowNodes.length < 1) {
-      alert("⚠️ There are no nodes to preview!");
-      return;
-    }
     // Deselect all nodes/edges so handles disappear
     setFlowNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
     setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
     setSidebarOpen(false);
     setPreviewOpen(true);
     previewCtx.activate();
-  }, [flowNodes]);
+  }, []);
 
   const handleClosePreview = useCallback(() => {
     setPreviewOpen(false);
@@ -417,9 +414,11 @@ function GraphEditorInner() {
 
 export default function GraphEditor() {
   return (
-    <PreviewProvider>
-      <GraphEditorInner />
-    </PreviewProvider>
+    <NodeHighlightProvider>
+      <PreviewProvider>
+        <GraphEditorInner />
+      </PreviewProvider>
+    </NodeHighlightProvider>
   );
 }
 //#endregion

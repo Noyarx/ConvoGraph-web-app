@@ -1,9 +1,9 @@
 import { StepEdge, type EdgeProps, type Edge } from "@xyflow/react";
 import type { FC } from "react";
-import { useEdgeDimming } from "../../preview/PreviewContext";
+import { useEdgeHighlightDimming } from "../../highlight/NodeHighlightContext";
 
 const StepEdgeWithHighlight: FC<EdgeProps<Edge>> = (props) => {
-  const isDimmed = useEdgeDimming(props.source, props.target);
+  const isDimmed = useEdgeHighlightDimming(props.source, props.target);
 
   return (
     <StepEdge

@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { HighlightState } from "../../preview/PreviewContext";
+import type { HighlightState } from "../../highlight/NodeHighlightContext";
 
 export function getInverseScale(zoom: number) {
   return 1 / zoom;

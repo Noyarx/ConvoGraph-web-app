@@ -1,7 +1,7 @@
 import { useStore, type Node } from "@xyflow/react";
 import { useMemo } from "react";
 import type { CommentNode } from "../../models/NodeTypes.model";
-import { usePreviewHighlight } from "../../preview/PreviewContext";
+import { useNodeHighlight } from "../../highlight/NodeHighlightContext";
 import { Placeholder } from "./placeholderComponent";
 import { getHighlightStyle } from "./util";
 
@@ -11,7 +11,7 @@ function CommentNodeComponent(flowNode: Pick<Node, "data">) {
   const node = flowNode.data as any as CommentNode;
   const zoom = useStore((state) => state.transform[2]);
   const zoomedIn = useMemo(() => zoom >= 0.3, [zoom]);
-  const highlightState = usePreviewHighlight(node.id);
+  const highlightState = useNodeHighlight(node.id);
 
   return (
     <div

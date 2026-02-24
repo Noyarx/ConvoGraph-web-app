@@ -11,6 +11,7 @@ import {
   toXYFlowNodes,
 } from "../../nodes/utils/xyflowAdapter";
 import { useFlowHistory } from "../../flow-history/FlowHistoryContext";
+import { usePreviewContext } from "../../preview/PreviewContext";
 
 interface HeaderProps {
   onPreview: () => void;
@@ -19,6 +20,7 @@ interface HeaderProps {
 function Header({ onPreview }: HeaderProps) {
   const flowHistory = useFlowHistory();
   const { getNodes, getEdges, setNodes, setEdges } = useReactFlow();
+  const { active: isPreview } = usePreviewContext();
 
   const handleExport = () => {
     const graphNodes = flowToGraphTree(getNodes(), getEdges());
@@ -56,6 +58,7 @@ function Header({ onPreview }: HeaderProps) {
               type="button"
               variant="solid"
               onClick={handleImport}
+              disabled={isPreview}
             >
               <p>
                 <strong>Import</strong>
@@ -71,6 +74,7 @@ function Header({ onPreview }: HeaderProps) {
               type="button"
               variant="solid"
               onClick={handleExport}
+              disabled={isPreview}
             >
               <p>
                 <strong>Export</strong>

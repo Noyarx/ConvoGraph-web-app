@@ -2,7 +2,7 @@ import Chip from "@mui/material/Chip";
 import { Handle, Position, useStore, type Node } from "@xyflow/react";
 import { useMemo } from "react";
 import type { ConditionalNode } from "../../models/NodeTypes.model";
-import { usePreviewHighlight } from "../../preview/PreviewContext";
+import { useNodeHighlight } from "../../highlight/NodeHighlightContext";
 import "./placeholder.css";
 import { Placeholder } from "./placeholderComponent";
 import {
@@ -25,7 +25,7 @@ function ConditionalNodeComponent(flowNode: Pick<Node, "data">) {
     () => zoomedIn && nodo.selected,
     [zoomedIn, nodo.selected],
   );
-  const highlightState = usePreviewHighlight(node.id);
+  const highlightState = useNodeHighlight(node.id);
 
   return (
     <div
