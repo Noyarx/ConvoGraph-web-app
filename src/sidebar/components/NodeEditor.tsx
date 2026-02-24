@@ -1,11 +1,16 @@
 import { Input, Textarea, Typography } from "@material-tailwind/react";
-import { MenuItem, Select, Stack } from "@mui/material";
+import { IconButton, MenuItem, Select, Stack, Tooltip, CircularProgress } from "@mui/material";
 import { useEffect, useState } from "react";
+import { useReactFlow } from "@xyflow/react";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import SpellcheckIcon from "@mui/icons-material/Spellcheck";
 import {
   useCharacterData,
   type CharacterDataContextType,
 } from "../selectItems/CharacterDataContext";
 import { operators, type SelectItem } from "../selectItems/SelectItems";
+import { generateDialogue, fixGrammar, type HistoryMessage } from "../../ai/llamaService";
+import { useCharacters } from "../../characters/CharactersContext";
 
 interface NodeEditorProps {
   node: Record<string, any>;
@@ -25,7 +30,38 @@ const itemHoverClass = "hover:!bg-slate-200";
 function NodeEditor({ node, onChange }: NodeEditorProps) {
   const graphNode = node.data;
   const [data, setData] = useState(graphNode.data);
+  const [aiLoading, setAiLoading] = useState(false);
+  const { getNodes, getEdges } = useReactFlow();
+  const { characters } = useCharacters();
   const context = useCharacterData();
+
+  function getHistory(): HistoryMessage[] {
+    const nodes = getNodes();
+    const edges = getEdges();
+    const messages: HistoryMessage[] = [];
+    const visited = new Set<string>();
+    let currentId = node.id;
+
+    // Walk backward through parent edges, up to 10 dialogue nodes
+    while (messages.length < 10) {
+      const parentEdge = edges.find(e => e.target === currentId && !visited.has(e.source));
+      if (!parentEdge) break;
+      visited.add(parentEdge.source);
+
+      const parentNode = nodes.find(n => n.id === parentEdge.source);
+      if (!parentNode) break;
+
+      const type = parentNode.type;
+      if (type === "statement" || type === "question") {
+        const d = (parentNode.data as any).data;
+        if (d?.text?.trim()) {
+          messages.unshift({ speaker: d.speaker || "", mood: d.mood || "", text: d.text });
+        }
+      }
+      currentId = parentEdge.source;
+    }
+    return messages;
+  }
 
   function renderSelectField(props: SelectFieldProps) {
     if (!context) return null;
@@ -128,11 +164,76 @@ function NodeEditor({ node, onChange }: NodeEditorProps) {
                 </Stack>
               </Stack>
               <Stack rowGap={0.5}>
-                <label htmlFor="textarea">
-                  <span className="">
-                    <strong>Text:</strong>
-                  </span>
-                </label>
+                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                  <label htmlFor="textarea">
+                    <span>
+                      <strong>Text:</strong>
+                    </span>
+                  </label>
+                  <Stack direction="row" spacing={0.5}>
+                    <Tooltip title="Fix grammar" arrow>
+                      <span>
+                        <IconButton
+                          size="small"
+                          disabled={aiLoading || !data.text?.trim()}
+                          onClick={async () => {
+                            setAiLoading(true);
+                            try {
+                              const result = await fixGrammar(data.text);
+                              handleChange("text", result);
+                            } catch (e) {
+                              const msg = e instanceof Error ? e.message : "Unknown error";
+                              handleChange("text", `[AI Error] ${msg}`);
+                            } finally {
+                              setAiLoading(false);
+                            }
+                          }}
+                          sx={{ color: "#6366f1", padding: "2px" }}
+                        >
+                          {aiLoading ? (
+                            <CircularProgress size={18} sx={{ color: "#6366f1" }} />
+                          ) : (
+                            <SpellcheckIcon sx={{ fontSize: 18 }} />
+                          )}
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Generate with AI" arrow>
+                      <span>
+                        <IconButton
+                          size="small"
+                          disabled={aiLoading || !data.text?.trim()}
+                          onClick={async () => {
+                            setAiLoading(true);
+                            try {
+                              const char = characters.find(c => c.name === data.speaker);
+                              const result = await generateDialogue({
+                                speaker: data.speaker || "",
+                                mood: data.mood || "",
+                                prompt: data.text,
+                                history: getHistory(),
+                                description: char?.description || "",
+                              });
+                              handleChange("text", result);
+                            } catch (e) {
+                              const msg = e instanceof Error ? e.message : "Unknown error";
+                              handleChange("text", `[AI Error] ${msg}`);
+                            } finally {
+                              setAiLoading(false);
+                            }
+                          }}
+                          sx={{ color: "#6366f1", padding: "2px" }}
+                        >
+                          {aiLoading ? (
+                            <CircularProgress size={18} sx={{ color: "#6366f1" }} />
+                          ) : (
+                            <AutoAwesomeIcon sx={{ fontSize: 18 }} />
+                          )}
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </Stack>
+                </Stack>
                 <Textarea
                   key={"textarea"}
                   color="info"
